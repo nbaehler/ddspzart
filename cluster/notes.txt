@@ -1,0 +1,33 @@
+# Useful documentation
+# https://scitas-data.epfl.ch/confluence/display/DOC/Connecting+to+the+clusters
+# https://scitas-data.epfl.ch/confluence/display/DOC/Python+Virtual+Environments
+# https://scitasadm.epfl.ch/confluence/display/DOC/FAQ#FAQ-HowshouldIdotoaskforanaccesstotheGPUnodes?
+
+# Create env (once, the first time)
+virtualenv --system-site-packages ~/venvs/spharm
+
+# Activate env
+source ~/venvs/spharm/bin/activate
+
+# Load modules on cluster
+module load gcc/8.4.0 python/3.7.7 git/2.27.0
+
+# List all loaded modules
+module list
+
+# List all modules [or versions of a module]
+module spider [module]
+
+# Pip install command template
+pip3 install --no-cache-dir _ --user
+
+# Deactivate env
+deactivate
+
+# Delete env (Don't!)
+rm -rf ~/venvs/spharm/
+
+# Useful commands on cluster
+sbatch execute.sh
+squeue -u nbaehler
+scancel -u nbaehler

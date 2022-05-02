@@ -1,0 +1,21 @@
+#!/bin/bash
+module load gcc/8.4.0 python/3.7.7 cmake/3.16.5
+
+# Modify their install.sh
+
+cd omnizart
+
+# Install dependencies, with checkpoints automatically downloaded
+make install
+
+source ../.venv/bin/activate
+
+pip install platformdirs
+
+# Modify their gdrive.sh
+mkdir ./tmp
+
+# Download from https://drive.google.com/uc?export=download&id=10i8z1zH60a2coKEst47lELdkvZUmgd1b
+
+# Install Dev dependencies, since they will not be installed by default
+make install-dev
