@@ -13,15 +13,10 @@
 
 echo STARTING AT $(date)
 
-. load.sh
+. ../cluster/load.sh
 
-echo "DRUM"
 omnizart drum transcribe sample.wav
-
-echo "CHORD"
 omnizart chord transcribe sample.wav
-
-echo "MUSIC"
 omnizart music transcribe sample.wav
 
 echo FINISHED at $(date)

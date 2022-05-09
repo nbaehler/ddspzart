@@ -1,5 +1,4 @@
 .venv
 .vscode
 
-workspace/*
-!workspace/sample.wav
+workspace/slurm*

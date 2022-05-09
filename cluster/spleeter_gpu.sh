@@ -3,22 +3,18 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=0:5:0
+#SBATCH --time=1:0:0
 #SBATCH --cpus-per-task=4
-#SBATCH --partition=debug
+#SBATCH --partition=gpu
+#SBATCH --qos=gpu_free
 #SBATCH --gres=gpu:1
 
-# https://www.epfl.ch/research/facilities/scitas/hardware/fidis/
 # https://www.epfl.ch/research/facilities/scitas/hardware/izar/
 
 echo STARTING AT $(date)
 
 . ../cluster/load.sh
 
-# omnizart drum transcribe sample.wav
-# omnizart chord transcribe sample.wav
-# omnizart music transcribe sample.wav
-
-python timbre_transfer.py
+spleeter separate -p spleeter:2stems -o output audio_example.mp3
 
 echo FINISHED at $(date)

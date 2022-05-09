@@ -13,7 +13,7 @@
 
 echo STARTING AT $(date)
 
-. /load.sh
+. ../cluster/load.sh
 
 omnizart drum transcribe sample.wav
 omnizart chord transcribe sample.wav

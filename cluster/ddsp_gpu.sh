@@ -13,8 +13,8 @@
 
 echo STARTING AT $(date)
 
-. load.sh
+. ../cluster/load.sh
 
-python ../ddsp/timbre_transfer_test.py
+python timbre_transfer.py
 
 echo FINISHED at $(date)
