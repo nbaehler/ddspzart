@@ -71,20 +71,20 @@ class Transformer(Generic[TInput, TOutput]):
 
 class PitchShiftTransformer(Transformer[np.ndarray, np.ndarray]):
 
-    def __init__(self, samplerate: Optional[int] = None, shift_semitones: int = 0):
-        self.samplerate = samplerate if not samplerate is None else AugmentationConfig.AUDIO_SAMPLE_RATE
+    def __init__(self, sample_rate: Optional[int] = None, shift_semitones: int = 0):
+        self.sample_rate = sample_rate if not sample_rate is None else AugmentationConfig.AUDIO_SAMPLE_RATE
         self.shift_semitones = shift_semitones
-        super().__init__(f'pitch_shift-({self.samplerate}-{self.shift_semitones})')
+        super().__init__(f'pitch_shift-({self.sample_rate}-{self.shift_semitones})')
 
     def transform(self, input: np.ndarray) -> np.ndarray:
         """input is expected to be a mono channel of samples."""
-        return self.transform_with_com418(input)
+        return self.transform_with_com418(input) #FIXME
     
     # FIXME
     #     if not len(input.shape) == 1:
     #         raise ValueError(f'Expected input data with a dimensionality of 1, got {len(input.shape)} (exact shape was {repr(input.shape)}).')
         
-    #     return pyrubberband.pyrb.pitch_shift(input, self.samplerate, self.shift_semitones)
+    #     return pyrubberband.pyrb.pitch_shift(input, self.sample_rate, self.shift_semitones)
 
     def pitchshift_gs_rt(self, x, alpha, grain_size, overlap=0.4):
         win, stride = Utils.tapering_window(grain_size, overlap)
@@ -93,17 +93,23 @@ class PitchShiftTransformer(Transformer[np.ndarray, np.ndarray]):
         y = np.zeros(len(x))
         # input chunks and output grains are always aligned in pitch shifting (in_hop = out_hop = stride)
         for n in range(0, len(x) - max(chunk_size, grain_size), stride):
-            y[n:n+grain_size] += Utils.resample(x[n:n+chunk_size], 1 / alpha) * win
+            
+            try:
+                y[n:n+grain_size] += Utils.resample(x[n:n+chunk_size], 1 / alpha) * win
+            except: #FIXME Check why this happens
+                print('warning')
+                y[n:n+grain_size-1] += Utils.resample(x[n:n+chunk_size], 1 / alpha) * win
+
         return y
 
     def transform_with_com418(self, input: np.ndarray) -> np.ndarray:
         semitone = 2 ** (1.0 / 12)
-        grain_size = Utils.ms2n(100, self.samplerate)
+        grain_size = Utils.ms2n(100, self.sample_rate)
         return self.pitchshift_gs_rt(input, semitone ** (self.shift_semitones), grain_size)
 
 class PitchShiftAugmentationTransformer(PitchShiftTransformer):
-    def __init__(self, samplerate: Optional[int] = None, max_shift: int = 0):
-        super().__init__(samplerate, max_shift)
+    def __init__(self, sample_rate: Optional[int] = None, max_shift: int = 0):
+        super().__init__(sample_rate, max_shift)
         self.max_shift = max_shift
 
     def transform(self, input: np.ndarray) -> np.ndarray:
@@ -167,7 +173,19 @@ class TimeStretchingTransformer(Transformer[np.ndarray, np.ndarray]):
             phase = phase + phase_diff  
             phase = phase - 2 * np.pi * np.round(phase / (2 * np.pi))
         return y
-    
+
+class TimeStretchingAugmentationTransformer(TimeStretchingTransformer):
+
+    def __init__(self, min_strectch_factor: float = 1, max_strectch_factor: float = 1, sample_rate: int = None):
+        super().__init__(max_strectch_factor, sample_rate)
+        self.max_strectch_factor = max_strectch_factor
+        self.min_strectch_factor = min_strectch_factor
+
+    def transform(self, input: np.ndarray) -> np.ndarray:
+        self.strectch_factor = np.random.uniform(self.min_strectch_factor, self.max_strectch_factor)
+        return self.transform_com418(input)
+        #return pyrubberband.pyrb.time_stretch(input, self.samplerate, self.strectch_factor) # FIXME Do that
+  
 
 class LoudnessTransformer(Transformer[np.ndarray, np.ndarray]):
     
@@ -188,23 +206,52 @@ class LoudnessAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
         f = np.random.uniform(1 / self.f_max, self.f_max)
         return input * f
     
-class DiverseLoudnessAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
-    # That manipulates the whole signal...
-    def __init__(self, f_max: float = 1, N: int = 100):
+class DiverseLoudnessTransformer(Transformer[np.ndarray, np.ndarray]):
+
+    def __init__(self, f_max: float = 1, Tc: float = 1.0, sample_rate: int = None):
         super().__init__(f'diverse_loudness_{f_max}')
         self.f_max = f_max
-        self.N = N
+        self.sample_rate = sample_rate if sample_rate is not None else AugmentationConfig.AUDIO_SAMPLE_RATE
+        self.N = int(Tc * self.sample_rate)
+
+
+    def get_factor(self) -> np.uint:
+        return self.f_max
 
     def transform(self, x: np.ndarray) -> np.ndarray:
         
+        self.f = self.get_factor()
         weigthing = np.random.randint(0,2,len(x))
         N = self.N
-
         weigthing = 2*np.convolve(weigthing, np.ones(N)/N, mode='valid') - 1 
         weigthing = np.concatenate((weigthing[0:(len(x)-len(weigthing))//2],weigthing,weigthing[-(len(x)-len(weigthing))//2:]))
         weigthing = weigthing - np.mean(weigthing)
         weigthing -= np.min(weigthing)
-        weigthing *= self.f_max / np.max(weigthing)
+        weigthing *= self.f / np.max(weigthing)
+
+        return x * weigthing
+
+class DiverseLoudnessAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
+    # FIXME Do as derived class
+
+    def __init__(self, f_max: float = 1, Tc: float = 1.0, sample_rate: int = None):
+        super().__init__(f'diverse_loudness_augmentation{f_max}')
+        self.f_max = f_max
+        self.sample_rate = sample_rate if sample_rate is not None else AugmentationConfig.AUDIO_SAMPLE_RATE
+        self.N = int(Tc * self.sample_rate)
+
+    def get_factor(self) -> np.uint:
+        return np.random.uniform(1 / self.f_max, self.f_max)
+
+    def transform(self, x: np.ndarray) -> np.ndarray:
+        self.f = self.get_factor()
+        weigthing = np.random.randint(0,2,len(x))
+        N = self.N
+        weigthing = 2*np.convolve(weigthing, np.ones(N)/N, mode='valid') - 1 
+        weigthing = np.concatenate((weigthing[0:(len(x)-len(weigthing))//2],weigthing,weigthing[-(len(x)-len(weigthing))//2:]))
+        weigthing = weigthing - np.mean(weigthing)
+        weigthing -= np.min(weigthing)
+        weigthing *= self.f / np.max(weigthing)
 
         return x * weigthing
 
@@ -229,88 +276,88 @@ class AdditiveGaussianNoiseAugmentationTransformer(Transformer[np.ndarray, np.nd
         noise_matrix = np.random.normal(self.mean, sigma, input.shape)
         return input + noise_matrix
 
-# FIXME Test that
-class TimeFrequencyDomainTimeWarpTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, warp_distance: float = 0):
-        super().__init__(f't_f_time_warp_{warp_distance}')
-        self.warp_distance = warp_distance
+# # This is only for spectrogram as input
+# class TimeFrequencyDomainTimeWarpTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, warp_distance: float = 0):
+#         super().__init__(f't_f_time_warp_{warp_distance}')
+#         self.warp_distance = warp_distance
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        bins, times = input.shape
-        xrange = lambda x: np.linspace(0, 1, x)
-        x_1 = times // 2 + self.warp_distance
-        x_2 = times - x_1
-        xwarprange = np.concatenate((np.linspace(0, .5, x_1, endpoint=False), np.linspace(.5, 1, x_2)))
-        return interpolate.interp2d(xrange(times), xrange(bins), input, kind='linear')(xwarprange, xrange(bins))
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         bins, times = input.shape
+#         xrange = lambda x: np.linspace(0, 1, x)
+#         x_1 = times // 2 + self.warp_distance
+#         x_2 = times - x_1
+#         xwarprange = np.concatenate((np.linspace(0, .5, x_1, endpoint=False), np.linspace(.5, 1, x_2)))
+#         return interpolate.interp2d(xrange(times), xrange(bins), input, kind='linear')(xwarprange, xrange(bins))
 
-class TimeFrequencyDomainTimeWarpAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, max_warp_distance: float = 0):
-        super().__init__(f't_f_time_warp_augmentation_{max_warp_distance}')
-        self.max_warp_distance = max_warp_distance
+# class TimeFrequencyDomainTimeWarpAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, max_warp_distance: float = 0):
+#         super().__init__(f't_f_time_warp_augmentation_{max_warp_distance}')
+#         self.max_warp_distance = max_warp_distance
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        warp_distance = int(np.random.uniform(-self.max_warp_distance, self.max_warp_distance))
-        bins, times = input.shape
-        xrange = lambda x: np.linspace(0, 1, x)
-        x_1 = times // 2 + warp_distance
-        x_2 = times - x_1
-        xwarprange = np.concatenate((np.linspace(0, .5, x_1, endpoint=False), np.linspace(.5, 1, x_2)))
-        return interpolate.interp2d(xrange(times), xrange(bins), input, kind='linear')(xwarprange, xrange(bins))
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         warp_distance = int(np.random.uniform(-self.max_warp_distance, self.max_warp_distance))
+#         bins, times = input.shape
+#         xrange = lambda x: np.linspace(0, 1, x)
+#         x_1 = times // 2 + warp_distance
+#         x_2 = times - x_1
+#         xwarprange = np.concatenate((np.linspace(0, .5, x_1, endpoint=False), np.linspace(.5, 1, x_2)))
+#         return interpolate.interp2d(xrange(times), xrange(bins), input, kind='linear')(xwarprange, xrange(bins))
 
-# Not really useful
-class TimeMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, t_0: float, t: float):
-        super().__init__(f'time_mask_{t_0}_{t}')
-        self.t_0 = t_0
-        self.t = t
+# # Not really useful
+# class TimeMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, t_0: float, t: float):
+#         super().__init__(f'time_mask_{t_0}_{t}')
+#         self.t_0 = t_0
+#         self.t = t
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        input[:,self.t_0:(self.t_0+self.t)] = 0
-        return input
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         input[:,self.t_0:(self.t_0+self.t)] = 0
+#         return input
 
-# Not really useful
-class TimeMaskingAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, max_t: float):
-        super().__init__(f'time_mask_augmentation_{max_t}')
-        self.max_t = max_t
+# # Not really useful
+# class TimeMaskingAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, max_t: float):
+#         super().__init__(f'time_mask_augmentation_{max_t}')
+#         self.max_t = max_t
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        t = int(np.random.uniform(0, self.max_t))
-        t_0 = int(np.random.uniform(0, input.shape[1] - t - 1))
-        input[:,t_0:(t_0+t)] = 0
-        return input
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         t = int(np.random.uniform(0, self.max_t))
+#         t_0 = int(np.random.uniform(0, input.shape[1] - t - 1))
+#         input[:,t_0:(t_0+t)] = 0
+#         return input
 
-# Not really useful
-class FrequencyMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, f_0: float, f: float):
-        super().__init__(f'frequency_mask_{f_0}_{f}')
-        self.f_0 = f_0
-        self.f = f
+# # Not really useful
+# class FrequencyMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, f_0: float, f: float):
+#         super().__init__(f'frequency_mask_{f_0}_{f}')
+#         self.f_0 = f_0
+#         self.f = f
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        input[self.f_0:(self.f_0+self.f)] = 0
-        return input
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         input[self.f_0:(self.f_0+self.f)] = 0
+#         return input
 
 
-# Not really useful
-class FrequencyMaskingAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, max_f: float):
-        super().__init__(f'frequency_mask_augmentation_{max_f}')
-        self.max_f = max_f
+# # Not really useful
+# class FrequencyMaskingAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, max_f: float):
+#         super().__init__(f'frequency_mask_augmentation_{max_f}')
+#         self.max_f = max_f
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        f = int(np.random.uniform(0, self.max_f))
-        f_0 = int(np.random.uniform(0, input.shape[0] - f - 1))
-        input[f_0:(f_0+f)] = 0
-        return input
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         f = int(np.random.uniform(0, self.max_f))
+#         f_0 = int(np.random.uniform(0, input.shape[0] - f - 1))
+#         input[f_0:(f_0+f)] = 0
+#         return input
 
-# Not really useful
-class FrequencyMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
-    def __init__(self, f_0: float, f: float):
-        super().__init__(f'frequency_mask_{f_0}_{f}')
-        self.f_0 = f_0
-        self.f = f
+# # Not really useful
+# class FrequencyMaskingTransformer(Transformer[np.ndarray, np.ndarray]):
+#     def __init__(self, f_0: float, f: float):
+#         super().__init__(f'frequency_mask_{f_0}_{f}')
+#         self.f_0 = f_0
+#         self.f = f
 
-    def transform(self, input: np.ndarray) -> np.ndarray:
-        input[self.f_0:(self.f_0+self.f)] = 0
-        return input
+#     def transform(self, input: np.ndarray) -> np.ndarray:
+#         input[self.f_0:(self.f_0+self.f)] = 0
+#         return input
