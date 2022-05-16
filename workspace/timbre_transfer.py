@@ -30,7 +30,7 @@ import ddsp.training
 from ddsp.colab.colab_utils import (
     auto_tune,
     get_tuning_factor,
-    download,
+    # download,
     play,
     record,
     specplot,

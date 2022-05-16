@@ -1,4 +1,9 @@
 .venv
 .vscode
 
+.omni_venv
+.ddsp_venv
+.spleeter_venv
+
 workspace/slurm*
+workspace/pretrained_models/

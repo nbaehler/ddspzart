@@ -11,8 +11,9 @@ export LLVM_CONFIG_PATH=/usr/bin/llvm-config
 
 cd omnizart
 make install
-source ../.venv/bin/activate
+source ../.omni_venv/bin/activate
 pip install numpy
+pip install pyFluidSynth
 pip install platformdirs
 
 # Download from
@@ -21,15 +22,6 @@ pip install platformdirs
 
 make install-dev
 
-cd ../ddsp
-
-./update_pip.sh
-pip install --upgrade pip
-pip install --upgrade ddsp
-
-cd ../spleeter
-
-pip install poetry
-poetry install
-
 cd ..
+
+echo "Omnizart installed successfully (maybe)!"
