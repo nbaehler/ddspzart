@@ -13,60 +13,76 @@
 # limitations under the License.
 # ==============================================================================
 
+# @title #Install and Import
+
+# @markdown Install ddsp, define some helper functions, and download the model. This transfers a lot of data and _should take a minute or two_.
+print("Installing from pip package...")
+# !pip install -qU ddsp==1.6.5
+
 # Ignore a bunch of deprecation warnings
 import warnings
 
 warnings.filterwarnings("ignore")
 
+import copy
 import os
 import time
 
+import crepe
 import ddsp
 import ddsp.training
 from ddsp.colab.colab_utils import (
     auto_tune,
     get_tuning_factor,
+    download,
+    play,
+    record,
     specplot,
+    upload,
     DEFAULT_SAMPLE_RATE,
-    audio_bytes_to_np,
 )
 
 
 from ddsp.training.postprocessing import detect_notes, fit_quantile_transform
 import gin
+from google.colab import files
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import tensorflow.compat.v2 as tf
-
-from scipy.io.wavfile import write
-
-from tensorflow.python.ops.numpy_ops import np_config
-
-np_config.enable_numpy_behavior()
+import tensorflow_datasets as tfds
 
 # Helper Functions
-sample_rate = DEFAULT_SAMPLE_RATE
-normalize_db = None
+sample_rate = DEFAULT_SAMPLE_RATE  # 16000
 
-input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.wav")
 
-with open(input_file, "rb") as wavfile:
-    audio_bytes = wavfile.read()
+print("Done!")
 
-audio = audio_bytes_to_np(
-    audio_bytes, sample_rate=sample_rate, normalize_db=normalize_db
-)
+# @title Record or Upload Audio
+# @markdown * Either record audio from microphone or upload audio from file (.mp3 or .wav)
+# @markdown * Audio should be monophonic (single instrument / voice)
+# @markdown * Extracts fundmanetal frequency (f0) and loudness features.
 
+record_or_upload = "Record"  # @param ["Record", "Upload (.mp3 or .wav)"]
+
+record_seconds = 5  # @param {type:"number", min:1, max:10, step:1}
+
+if record_or_upload == "Record":
+    audio = record(seconds=record_seconds)
+else:
+    # Load audio sample here (.mp3 or .wav3 file)
+    # Just use the first file.
+    filenames, audios = upload()
+    audio = audios[0]
 if len(audio.shape) == 1:
     audio = audio[np.newaxis, :]
 print("\nExtracting audio features...")
 
-# Plot
+# Plot.
 specplot(audio)
-plt.title("Original")
-plt.savefig("original_spectrum.png")
+play(audio)
+
 # Setup the session.
 ddsp.spectral_ops.reset_crepe()
 
@@ -91,39 +107,47 @@ ax[2].plot(audio_features["f0_confidence"][:TRIM])
 ax[2].set_ylabel("f0 confidence")
 _ = ax[2].set_xlabel("Time step [frame]")
 
-fig.savefig("features.png")
-
-# @param ['Violin', 'Flute', 'Flute2', 'Trumpet', 'Tenor_Saxophone']
-model = "Violin"
+# @title Load a model
+# @markdown Run for ever new audio input
+model = "Violin"  # @param ['Violin', 'Flute', 'Flute2', 'Trumpet', 'Tenor_Saxophone', 'Upload your own (checkpoint folder as .zip)']
 MODEL = model
 
-if model in {"Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"}:
+
+def find_model_dir(dir_name):
+    # Iterate through directories until model directory is found
+    for root, dirs, filenames in os.walk(dir_name):
+        for filename in filenames:
+            if filename.endswith(".gin") and not filename.startswith("."):
+                model_dir = root
+                break
+    return model_dir
+
+
+if model in ("Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"):
     # Pretrained models.
-    PRETRAINED_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "ddsp_pretrained",
-    )
-
+    PRETRAINED_DIR = "/content/pretrained"
     # Copy over from gs:// for faster loading.
-    os.system(f"rm -rf {PRETRAINED_DIR}")
-    os.system(f"mkdir {PRETRAINED_DIR}")
+    #   !rm -r $PRETRAINED_DIR &> /dev/null
+    #   !mkdir $PRETRAINED_DIR &> /dev/null
     GCS_CKPT_DIR = "gs://ddsp/models/timbre_transfer_colab/2021-07-08"
-    model_dir = os.path.join(GCS_CKPT_DIR, f"solo_{model.lower()}_ckpt")
+    model_dir = os.path.join(GCS_CKPT_DIR, "solo_%s_ckpt" % model.lower())
 
-    PRETRAINED_DIR = os.path.join(PRETRAINED_DIR, f"solo_{model.lower()}")
-    os.system(f"mkdir {PRETRAINED_DIR}")
-    os.system(f"gsutil cp {model_dir}/* {PRETRAINED_DIR}")
+    #   !gsutil cp $model_dir/* $PRETRAINED_DIR &> /dev/null
     model_dir = PRETRAINED_DIR
+    gin_file = os.path.join(model_dir, "operative_config-0.gin")
+
 else:
     # User models.
-    USER_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "ddsp_user",
-    )
+    UPLOAD_DIR = "/content/uploaded"
+    #   !mkdir $UPLOAD_DIR
+    uploaded_files = files.upload()
 
-    model_dir = os.path.join(USER_DIR, f"{model.lower()}")
+    for fnames in uploaded_files.keys():
+        print("Unzipping... {}".format(fnames))
+        # !unzip -o "/content/$fnames" -d $UPLOAD_DIR &> /dev/null
+    model_dir = find_model_dir(UPLOAD_DIR)
+    gin_file = os.path.join(model_dir, "operative_config-0.gin")
 
-gin_file = os.path.join(model_dir, "operative_config-0.gin")
 
 # Load the dataset statistics.
 DATASET_STATS = None
@@ -134,7 +158,7 @@ try:
         with tf.io.gfile.GFile(dataset_stats_file, "rb") as f:
             DATASET_STATS = pickle.load(f)
 except Exception as err:
-    print(f"Loading dataset statistics from pickle failed: {err}.")
+    print("Loading dataset statistics from pickle failed: {}.".format(err))
 
 
 # Parse gin config,
@@ -154,20 +178,20 @@ hop_size = int(n_samples_train / time_steps_train)
 time_steps = int(audio.shape[1] / hop_size)
 n_samples = time_steps * hop_size
 
-print("===Trained model===")
-print("Time Steps", time_steps_train)
-print("Samples", n_samples_train)
-print("Hop Size", hop_size)
-print("\n===Resynthesis===")
-print("Time Steps", time_steps)
-print("Samples", n_samples)
-print("")
+# print("===Trained model===")
+# print("Time Steps", time_steps_train)
+# print("Samples", n_samples_train)
+# print("Hop Size", hop_size)
+# print("\n===Resynthesis===")
+# print("Time Steps", time_steps)
+# print("Samples", n_samples)
+# print('')
 
 gin_params = [
-    f"Harmonic.n_samples = {n_samples}",
-    f"FilteredNoise.n_samples = {n_samples}",
-    f"F0LoudnessPreprocessor.time_steps = {time_steps}",
-    "oscillator_bank.use_angular_cumsum = True",
+    "Harmonic.n_samples = {}".format(n_samples),
+    "FilteredNoise.n_samples = {}".format(n_samples),
+    "F0LoudnessPreprocessor.time_steps = {}".format(time_steps),
+    "oscillator_bank.use_angular_cumsum = True",  # Avoids cumsum accumulation errors.
 ]
 
 with gin.unlock_config():
@@ -189,46 +213,49 @@ start_time = time.time()
 _ = model(audio_features, training=False)
 print("Restoring model took %.1f seconds" % (time.time() - start_time))
 
+# @title Modify conditioning
 
-# Note Detection
-# You can leave this at 1.0 for most cases
+# @markdown These models were not explicitly trained to perform timbre transfer, so they may sound unnatural if the incoming loudness and frequencies are very different then the training data (which will always be somewhat true).
+
+
+# @markdown ## Note Detection
+
+# @markdown You can leave this at 1.0 for most cases
 threshold = 1  # @param {type:"slider", min: 0.0, max:2.0, step:0.01}
 
 
-# Automatic
+# @markdown ## Automatic
+
 ADJUST = True  # @param{type:"boolean"}
 
-# Quiet parts without notes detected (dB)
+# @markdown Quiet parts without notes detected (dB)
 quiet = 20  # @param {type:"slider", min: 0, max:60, step:1}
 
-# Force pitch to nearest note (amount)
+# @markdown Force pitch to nearest note (amount)
 autotune = 0  # @param {type:"slider", min: 0.0, max:1.0, step:0.1}
 
-# Manual
-# Shift the pitch (octaves)
+# @markdown ## Manual
+
+
+# @markdown Shift the pitch (octaves)
 pitch_shift = 0  # @param {type:"slider", min:-2, max:2, step:1}
 
-# Adjust the overall loudness (dB)
+# @markdown Adjust the overall loudness (dB)
 loudness_shift = 0  # @param {type:"slider", min:-20, max:20, step:1}
 
-audio_features = {
-    k: v.numpy() if tf.is_tensor(v) else v for k, v in audio_features.items()
-}
 
-audio_features_mod = {
-    k: v.numpy() if tf.is_tensor(v) else v.copy() for k, v in audio_features.items()
-}
+audio_features_mod = {k: v.copy() for k, v in audio_features.items()}
 
 
-# Helper functions.
+## Helper functions.
 def shift_ld(audio_features, ld_shift=0.0):
-    """Shift loudness by a number of octaves."""
+    """Shift loudness by a number of ocatves."""
     audio_features["loudness_db"] += ld_shift
     return audio_features
 
 
 def shift_f0(audio_features, pitch_shift=0.0):
-    """Shift f0 by a number of octaves."""
+    """Shift f0 by a number of ocatves."""
     audio_features["f0_hz"] *= 2.0 ** (pitch_shift)
     audio_features["f0_hz"] = np.clip(
         audio_features["f0_hz"], 0.0, librosa.midi_to_hz(110.0)
@@ -284,7 +311,7 @@ if ADJUST and DATASET_STATS is not None:
         print("\nSkipping auto-adjust (no notes detected or ADJUST box empty).")
 
 else:
-    print("\nSkipping auto-adjust (box not checked or no dataset statistics found).")
+    print("\nSkipping auto-adujst (box not checked or no dataset statistics found).")
 
 # Manual Shifts.
 audio_features_mod = shift_ld(audio_features_mod, loudness_shift)
@@ -317,9 +344,8 @@ ax.plot(librosa.hz_to_midi(audio_features_mod["f0_hz"][:TRIM]))
 ax.set_ylabel("f0 [midi]")
 _ = ax.legend(["Original", "Adjusted"])
 
-fig.savefig("features_processed.png")
+# @title #Resynthesize Audio
 
-# Resynthesize Audio
 af = audio_features if audio_features_mod is None else audio_features_mod
 
 # Run a batch of predictions.
@@ -328,10 +354,15 @@ outputs = model(af, training=False)
 audio_gen = model.get_audio_from_outputs(outputs)
 print("Prediction took %.1f seconds" % (time.time() - start_time))
 
+# Plot
+print("Original")
+play(audio)
+
+print("Resynthesis")
+play(audio_gen)
+
+specplot(audio)
+plt.title("Original")
+
 specplot(audio_gen)
 _ = plt.title("Resynthesis")
-plt.savefig("generated_spectrum.png")
-
-audio_gen = audio_gen.numpy()[0]
-
-write("generated_sample.wav", DEFAULT_SAMPLE_RATE, audio_gen)

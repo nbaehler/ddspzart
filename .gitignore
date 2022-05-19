@@ -6,4 +6,7 @@
 .spleeter_venv
 
 workspace/slurm*
-workspace/pretrained_models/
+workspace/pretrained_models
+workspace/ddsp_pretrained
+workspace/google-cloud-sdk
+newrelic_agent.log
