@@ -1,12 +1,19 @@
 #/bin/bash
-python timbre_transfer.py
+deactivate
+source deactivate
+source ../.omni_venv/bin/activate
+omnizart music transcribe 1788.wav
+omnizart synth 1788.mid
 
-omnizart drum transcribe sample.wav
-omnizart chord transcribe sample.wav
-omnizart music transcribe sample.wav
-omnizart synth sample.mid
+source ../.ddsp_venv/bin/activate
+python timbre_transfer.py 1788.wav Violin
 
-# Vocals (singing voice) / accompaniment separation (2 stems)
-# Vocals / drums / bass / other separation (4 stems)
-# Vocals / drums / bass / piano / other separation (5 stems)
-spleeter separate -p spleeter:2stems -o output audio_example.mp3
+# omnizart drum transcribe sample.wav
+# omnizart chord transcribe sample.wav
+# omnizart music transcribe sample.wav
+# omnizart synth sample.mid
+
+# # Vocals (singing voice) / accompaniment separation (2 stems)
+# # Vocals / drums / bass / other separation (4 stems)
+# # Vocals / drums / bass / piano / other separation (5 stems)
+# spleeter separate -p spleeter:2stems -o output audio_example.mp3
