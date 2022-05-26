@@ -1,4 +1,7 @@
 .venv
 .vscode
+*.ipynb*
+
+*__pycache__*
 
 workspace/slurm*
