@@ -10,8 +10,9 @@ workspace/ddsp_pretrained
 workspace/ddsp_user
 workspace/pretrained_models
 workspace/google-cloud-sdk
-workspace/1788_kv_465_1.mid
-workspace/1788.csv
-workspace/1788.wav
+workspace/*.mid
+workspace/*.csv
+workspace/*.wav
 
 newrelic_agent.log
+__pycache__/

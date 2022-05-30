@@ -2,11 +2,11 @@
 deactivate
 source deactivate
 source ../.omni_venv/bin/activate
-omnizart music transcribe 1788.wav
+# omnizart music transcribe 1788.wav
 omnizart synth 1788.mid
 
 source ../.ddsp_venv/bin/activate
-python timbre_transfer.py 1788.wav Violin
+python timbre_transfer.py 1788_synth.wav Violin
 
 # omnizart drum transcribe sample.wav
 # omnizart chord transcribe sample.wav

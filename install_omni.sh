@@ -1,6 +1,6 @@
 #/bin/bash
 
-sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev
+sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev fluidsynth
 
 path=$(pwd)
 cd /usr/bin
@@ -15,6 +15,7 @@ source ../.omni_venv/bin/activate
 pip install numpy
 pip install pyFluidSynth
 pip install platformdirs
+pip install click==7.1.2
 
 # Download from
 # https://drive.google.com/uc?export=download&id=10i8z1zH60a2coKEst47lELdkvZUmgd1b
