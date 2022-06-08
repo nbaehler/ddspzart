@@ -23,4 +23,3 @@ workspace/*.csv
 workspace/*.wav
 
 newrelic_agent.log
-__pycache__/
