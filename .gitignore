@@ -5,6 +5,9 @@
 .ddsp_venv
 .spleeter_venv
 
+google-cloud-sdk/
+google-cloud-cli*
+
 workspace/slurm*
 workspace/ddsp_pretrained
 workspace/ddsp_user
