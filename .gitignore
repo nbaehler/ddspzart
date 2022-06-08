@@ -4,4 +4,21 @@
 
 *__pycache__*
 
+.omni_venv
+.ddsp_venv
+.spleeter_venv
+
+google-cloud-sdk/
+google-cloud-cli*
+
 workspace/slurm*
+workspace/ddsp_pretrained
+workspace/ddsp_user
+workspace/pretrained_models
+workspace/google-cloud-sdk
+workspace/*.mid
+workspace/*.csv
+workspace/*.wav
+
+newrelic_agent.log
+__pycache__/

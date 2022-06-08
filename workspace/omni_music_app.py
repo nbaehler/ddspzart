@@ -1,6 +1,6 @@
 """Application class of music.
 
-Inludes core functions and interfaces for music transcription:
+Includes core functions and interfaces for music transcription:
 model training, feature pre-processing, and audio transcription.
 
 See Also
@@ -19,8 +19,11 @@ import numpy as np
 import tensorflow as tf
 
 from omnizart.feature.wrapper_func import extract_cfp_feature
-from omnizart.models.u_net import MultiHeadAttention, semantic_segmentation, semantic_segmentation_attn
-from omnizart.music.inference import multi_inst_note_inference
+from omnizart.models.u_net import (
+    MultiHeadAttention,
+    semantic_segmentation,
+    semantic_segmentation_attn,
+)
 from omnizart.music.prediction import predict
 from omnizart.music.labels import (
     LabelType,
@@ -30,14 +33,25 @@ from omnizart.music.labels import (
     PopLabelExtraction,
 )
 from omnizart.music.losses import focal_loss, smooth_loss
-from omnizart.base import BaseTranscription, BaseDatasetLoader
-from omnizart.utils import get_logger, parallel_generator, ensure_path_exists, resolve_dataset_type
+from omnizart.utils import (
+    get_logger,
+    parallel_generator,
+    ensure_path_exists,
+    resolve_dataset_type,
+)
 from omnizart.io import dump_pickle, write_yaml
 from omnizart.train import get_train_val_feat_file_list
 from omnizart.setting_loaders import MusicSettings
-from omnizart.constants.midi import MUSICNET_INSTRUMENT_PROGRAMS, POP_INSTRUMENT_PROGRAMES
+from omnizart.constants.midi import (
+    MUSICNET_INSTRUMENT_PROGRAMS,
+    POP_INSTRUMENT_PROGRAMES,
+)
 from omnizart.constants.feature import FEATURE_NAME_TO_NUMBER
 import omnizart.constants.datasets as d_struct
+
+from omni_music_inference import multi_inst_note_inference
+from omni_base import BaseTranscription, BaseDatasetLoader
+
 
 logger = get_logger("Music Transcription")
 
@@ -90,13 +104,17 @@ class MusicTranscription(BaseTranscription):
 
         See Also
         --------
-        omnizart.cli.music.transcribe: The coressponding command line entry.
+        omnizart.cli.music.transcribe: The corresponding command line entry.
         """
         if not os.path.isfile(input_audio):
-            raise FileNotFoundError(f"The given audio path does not exist. Path: {input_audio}")
+            raise FileNotFoundError(
+                f"The given audio path does not exist. Path: {input_audio}"
+            )
 
         logger.info("Loading model...")
-        model, model_settings = self._load_model(model_path, custom_objects=self.custom_objects)
+        model, model_settings = self._load_model(
+            model_path, custom_objects=self.custom_objects
+        )
 
         logger.info("Extracting feature...")
         feature = extract_cfp_feature(
@@ -114,11 +132,14 @@ class MusicTranscription(BaseTranscription):
         )
 
         logger.info("Predicting...")
-        channels = [FEATURE_NAME_TO_NUMBER[ch_name] for ch_name in model_settings.training.channels]
+        channels = [
+            FEATURE_NAME_TO_NUMBER[ch_name]
+            for ch_name in model_settings.training.channels
+        ]
         pred = predict(feature[:, :, channels], model)
 
-        logger.info("Infering notes....")
-        midi = multi_inst_note_inference(
+        logger.info("Inferring notes....")
+        midis = multi_inst_note_inference(
             pred,
             mode=model_settings.training.label_type,
             onset_th=model_settings.inference.onset_th,
@@ -126,10 +147,16 @@ class MusicTranscription(BaseTranscription):
             frm_th=model_settings.inference.frame_th,
             inst_th=model_settings.inference.inst_th,
             t_unit=model_settings.feature.hop_size,
-            channel_program_mapping=self.mode_inst_mapping[model_settings.transcription_mode],
+            channel_program_mapping=self.mode_inst_mapping[
+                model_settings.transcription_mode
+            ],
         )
 
-        self._output_midi(output=output, input_audio=input_audio, midi=midi)
+        for i, midi in enumerate(midis):
+            self._output_midi(
+                output=output, input_audio=input_audio, midi=midi, instrument=i
+            )
+
         if os.environ.get("LOG_LEVEL", "") == "debug":
             dump_pickle({"pred": pred, "feature": feature}, "./debug_pred.pickle")
 
@@ -167,11 +194,18 @@ class MusicTranscription(BaseTranscription):
 
         dataset_type = resolve_dataset_type(
             dataset_path,
-            keywords={"maps": "maps", "musicnet": "musicnet", "maestro": "maestro", "rhythm": "pop", "pop": "pop"},
+            keywords={
+                "maps": "maps",
+                "musicnet": "musicnet",
+                "maestro": "maestro",
+                "rhythm": "pop",
+                "pop": "pop",
+            },
         )
         if dataset_type is None:
             logger.warning(
-                "The given path %s does not match any built-in processable dataset. Do nothing...", dataset_path
+                "The given path %s does not match any built-in processable dataset. Do nothing...",
+                dataset_path,
             )
             return
         logger.info("Inferred dataset type: %s", dataset_type)
@@ -197,7 +231,9 @@ class MusicTranscription(BaseTranscription):
         logger.info("Number of total testing wavs: %d", len(test_wav_files))
 
         # Resolve feature output path
-        train_feat_out_path, test_feat_out_path = self._resolve_feature_output_path(dataset_path, settings)
+        train_feat_out_path, test_feat_out_path = self._resolve_feature_output_path(
+            dataset_path, settings
+        )
         logger.info("Output training feature to %s", train_feat_out_path)
         logger.info("Output testing feature to %s", test_feat_out_path)
 
@@ -208,9 +244,19 @@ class MusicTranscription(BaseTranscription):
             dataset_type.title(),
         )
         logger.info("Extracting training feature")
-        _parallel_feature_extraction(train_wav_files, train_feat_out_path, settings.feature, num_threads=num_threads)
+        _parallel_feature_extraction(
+            train_wav_files,
+            train_feat_out_path,
+            settings.feature,
+            num_threads=num_threads,
+        )
         logger.info("Extracting testing feature")
-        _parallel_feature_extraction(test_wav_files, test_feat_out_path, settings.feature, num_threads=num_threads)
+        _parallel_feature_extraction(
+            test_wav_files,
+            test_feat_out_path,
+            settings.feature,
+            num_threads=num_threads,
+        )
         logger.info("Extraction finished")
 
         # Fetching label files
@@ -222,16 +268,32 @@ class MusicTranscription(BaseTranscription):
         assert len(test_label_files) == len(test_wav_files)
 
         # Extract labels
-        logger.info("Start extracting the label of the dataset %s", dataset_type.title())
-        label_extractor.process(train_label_files, out_path=train_feat_out_path, t_unit=settings.feature.hop_size)
-        label_extractor.process(test_label_files, out_path=test_feat_out_path, t_unit=settings.feature.hop_size)
+        logger.info(
+            "Start extracting the label of the dataset %s", dataset_type.title()
+        )
+        label_extractor.process(
+            train_label_files,
+            out_path=train_feat_out_path,
+            t_unit=settings.feature.hop_size,
+        )
+        label_extractor.process(
+            test_label_files,
+            out_path=test_feat_out_path,
+            t_unit=settings.feature.hop_size,
+        )
 
         # Writing out the settings
         write_yaml(settings.to_json(), jpath(train_feat_out_path, ".success.yaml"))
         write_yaml(settings.to_json(), jpath(test_feat_out_path, ".success.yaml"))
         logger.info("All done")
 
-    def train(self, feature_folder, model_name=None, input_model_path=None, music_settings=None):
+    def train(
+        self,
+        feature_folder,
+        model_name=None,
+        input_model_path=None,
+        music_settings=None,
+    ):
         """Model training.
 
         Train the model from scratch or continue training given a model checkpoint.
@@ -254,7 +316,9 @@ class MusicTranscription(BaseTranscription):
 
         if input_model_path is not None:
             logger.info("Continue to train on model: %s", input_model_path)
-            model, prev_set = self._load_model(input_model_path, custom_objects=self.custom_objects)
+            model, prev_set = self._load_model(
+                input_model_path, custom_objects=self.custom_objects
+            )
             settings.training.timesteps = prev_set.training.timesteps
             settings.training.label_type = prev_set.training.label_type
             settings.training.channels = prev_set.training.channels
@@ -263,46 +327,86 @@ class MusicTranscription(BaseTranscription):
 
         logger.info("Using label type: %s", settings.training.label_type)
         l_type = LabelType(settings.training.label_type)
-        settings.transcription_mode = self.label_trans_mode_mapping[settings.training.label_type]
+        settings.transcription_mode = self.label_trans_mode_mapping[
+            settings.training.label_type
+        ]
 
         logger.info("Constructing dataset instance")
-        split = settings.training.steps / (settings.training.steps + settings.training.val_steps)
-        train_feat_files, val_feat_files = get_train_val_feat_file_list(feature_folder, split=split)
+        split = settings.training.steps / (
+            settings.training.steps + settings.training.val_steps
+        )
+        train_feat_files, val_feat_files = get_train_val_feat_file_list(
+            feature_folder, split=split
+        )
 
         output_types = (tf.float32, tf.float32)
         output_shapes = (
-            (settings.training.timesteps, settings.training.feature_num, len(settings.training.channels)),
-            (settings.training.timesteps, settings.training.feature_num, l_type.get_out_classes()),
+            (
+                settings.training.timesteps,
+                settings.training.feature_num,
+                len(settings.training.channels),
+            ),
+            (
+                settings.training.timesteps,
+                settings.training.feature_num,
+                l_type.get_out_classes(),
+            ),
         )
         train_dataset = MusicDatasetLoader(
             l_type.get_conversion_func(),
             feature_files=train_feat_files,
-            num_samples=settings.training.epoch * settings.training.batch_size * settings.training.steps,
+            num_samples=settings.training.epoch
+            * settings.training.batch_size
+            * settings.training.steps,
             timesteps=settings.training.timesteps,
-            channels=[FEATURE_NAME_TO_NUMBER[ch_name] for ch_name in settings.training.channels],
+            channels=[
+                FEATURE_NAME_TO_NUMBER[ch_name]
+                for ch_name in settings.training.channels
+            ],
             feature_num=settings.training.feature_num,
-        ).get_dataset(settings.training.batch_size, output_types=output_types, output_shapes=output_shapes)
+        ).get_dataset(
+            settings.training.batch_size,
+            output_types=output_types,
+            output_shapes=output_shapes,
+        )
         val_dataset = MusicDatasetLoader(
             l_type.get_conversion_func(),
             feature_files=val_feat_files,
-            num_samples=settings.training.epoch * settings.training.val_batch_size * settings.training.val_steps,
+            num_samples=settings.training.epoch
+            * settings.training.val_batch_size
+            * settings.training.val_steps,
             timesteps=settings.training.timesteps,
-            channels=[FEATURE_NAME_TO_NUMBER[ch_name] for ch_name in settings.training.channels],
+            channels=[
+                FEATURE_NAME_TO_NUMBER[ch_name]
+                for ch_name in settings.training.channels
+            ],
             feature_num=settings.training.feature_num,
-        ).get_dataset(settings.training.val_batch_size, output_types=output_types, output_shapes=output_shapes)
+        ).get_dataset(
+            settings.training.val_batch_size,
+            output_types=output_types,
+            output_shapes=output_shapes,
+        )
 
         if input_model_path is None:
             logger.info("Creating new model with type: %s", settings.model.model_type)
-            model_func = {"aspp": semantic_segmentation, "attn": semantic_segmentation_attn}[settings.model.model_type]
+            model_func = {
+                "aspp": semantic_segmentation,
+                "attn": semantic_segmentation_attn,
+            }[settings.model.model_type]
             model = model_func(
                 timesteps=settings.training.timesteps,
                 out_class=l_type.get_out_classes(),
                 ch_num=len(settings.training.channels),
             )
 
-        logger.info("Compiling model with loss function type: %s", settings.training.loss_function)
+        logger.info(
+            "Compiling model with loss function type: %s",
+            settings.training.loss_function,
+        )
         loss_func = {
-            "smooth": lambda y, x: smooth_loss(y, x, gamma=0.25, total_chs=l_type.get_out_classes()),
+            "smooth": lambda y, x: smooth_loss(
+                y, x, gamma=0.25, total_chs=l_type.get_out_classes()
+            ),
             "focal": focal_loss,
             "bce": tf.keras.losses.BinaryCrossentropy(label_smoothing=0.1),
         }[settings.training.loss_function]
@@ -313,7 +417,7 @@ class MusicTranscription(BaseTranscription):
         if model_name is None:
             model_name = str(datetime.now()).replace(" ", "_")
         if not model_name.startswith(settings.model.save_prefix):
-            model_name = settings.model.save_prefix + "_" + model_name
+            model_name = f"{settings.model.save_prefix}_{model_name}"
         model_save_path = jpath(settings.model.save_path, model_name)
         ensure_path_exists(model_save_path)
         write_yaml(settings.to_json(), jpath(model_save_path, "configurations.yaml"))
@@ -321,10 +425,14 @@ class MusicTranscription(BaseTranscription):
 
         logger.info("Constructing callbacks")
         callbacks = [
-            tf.keras.callbacks.EarlyStopping(patience=settings.training.early_stop, monitor="val_acc"),
+            tf.keras.callbacks.EarlyStopping(
+                patience=settings.training.early_stop, monitor="val_acc"
+            ),
             tf.keras.callbacks.ModelCheckpoint(model_save_path, monitor="val_accuracy"),
             tf.keras.callbacks.LearningRateScheduler(
-                lambda epoch, lr: lr_scheduler(epoch, lr, update_after=3, dec_every=3, dec_rate=0.25)
+                lambda epoch, lr: lr_scheduler(
+                    epoch, lr, update_after=3, dec_every=3, dec_rate=0.25
+                )
             ),
         ]
         logger.info("Callback list: %s", callbacks)
@@ -367,11 +475,13 @@ def _parallel_feature_extraction(audio_list, out_path, feat_settings, num_thread
     for idx, (feature, audio_idx) in iters:
         audio = audio_list[audio_idx]
         # logger.info("Progress: %s/%s - %s", idx+1, len(audio_list), audio)
-        print(f"Progress: {idx+1}/{len(audio_list)} - {audio}" + " " * 6, end="\r")  # noqa: E226
+        print(
+            f"Progress: {idx+1}/{len(audio_list)} - {audio}" + " " * 6, end="\r"
+        )  # noqa: E226
 
         basename = os.path.basename(audio)
         filename, _ = os.path.splitext(basename)
-        out_hdf = jpath(out_path, filename + ".hdf")
+        out_hdf = jpath(out_path, f"{filename}.hdf")
 
         saved = False
         retry_times = 5
@@ -383,15 +493,21 @@ def _parallel_feature_extraction(audio_list, out_path, feat_settings, num_thread
                     out_f.create_dataset("feature", data=feature)
                     saved = True
             except OSError as exp:
-                logger.warning("OSError occurred, retrying %d times. Reason: %s", retry + 1, str(exp))
+                logger.warning(
+                    "OSError occurred, retrying %d times. Reason: %s",
+                    retry + 1,
+                    str(exp),
+                )
         if not saved:
-            logger.error("H5py failed to save the feature file after %d retries.", retry_times)
+            logger.error(
+                "H5py failed to save the feature file after %d retries.", retry_times
+            )
             raise OSError
     print("")
 
 
 class MusicDatasetLoader(BaseDatasetLoader):
-    """Data loader for training the mdoel of ``music``.
+    """Dataloader for training the model of ``music``.
 
     Load feature and label for training. Also converts the custom format of
     label into piano roll representation.
@@ -432,11 +548,16 @@ class MusicDatasetLoader(BaseDatasetLoader):
         feature_files=None,
         num_samples=100,
         timesteps=128,
-        channels=[1, 3],
+        channels=None,
         feature_num=352,
     ):
+        if channels is None:
+            channels = [1, 3]
         super().__init__(
-            feature_folder=feature_folder, feature_files=feature_files, num_samples=num_samples, slice_hop=timesteps
+            feature_folder=feature_folder,
+            feature_files=feature_files,
+            num_samples=num_samples,
+            slice_hop=timesteps,
         )
 
         self.conv_func = label_conversion_func
@@ -462,9 +583,11 @@ class MusicDatasetLoader(BaseDatasetLoader):
 
     def _get_feature(self, hdf_name, slice_start):
         feat = self.hdf_refs[hdf_name]["feature"]
-        container = []
-        for ch in self.channels:
-            container.append(feat[slice_start : slice_start + self.slice_hop, :, ch].squeeze())
+        container = [
+            feat[slice_start : slice_start + self.slice_hop, :, ch].squeeze()
+            for ch in self.channels
+        ]
+
         feat = np.dstack(container)
         # feat = feat[slice_start:slice_start + self.slice_hop, :, self.channels].squeeze()
         if self.pad:
@@ -494,7 +617,7 @@ class MusicDatasetLoader(BaseDatasetLoader):
             label = label[:feat_len]
             label_len = len(label)
 
-        # Padding zeros to the end if the squence length is shorter than 'timesteps'.
+        # Padding zeros to the end if the sequence length is shorter than 'timesteps'.
         if feat_len != self.timesteps:
             assert feat_len < self.timesteps
             diff = self.timesteps - feat_len
