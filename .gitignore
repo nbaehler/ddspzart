@@ -11,6 +11,8 @@
 google-cloud-sdk/
 google-cloud-cli*
 
+datasets/
+
 workspace/slurm*
 workspace/ddsp_pretrained
 workspace/ddsp_user
