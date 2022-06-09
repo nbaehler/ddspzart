@@ -7,6 +7,8 @@
 .omni_venv
 .ddsp_venv
 .spleeter_venv
+.idea
+*/.openunmix*
 
 google-cloud-sdk/
 google-cloud-cli*
