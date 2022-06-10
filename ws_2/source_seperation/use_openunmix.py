@@ -8,6 +8,9 @@ import numpy as np
 import logging
 import time
 
+import yaml
+import pickle
+
 DATASET_FOLDER = "/media/olaf/OlafSSD/03_Dokumente/01_epfl/01_cm/slakh2100_flac_redux"
 
 def get_sequence_from_start_and_duration(x: np.ndarray, seq_duration: float, start_time: float, sr: float) -> np.ndarray:
@@ -26,7 +29,15 @@ class Target():
         stem = f"S{stem_id:02d}"
         track_folder = f"{DATASET_FOLDER}/{split}/Track{track_id:05d}"
         self.audio_stem_folder = f"{track_folder}/stems/{stem}.flac"
+        # tic = time.perf_counter()
+        # with open(f"{track_folder}/metadata.yaml", 'r') as stream:
+        #     try:
+        #         info_dict=yaml.safe_load(stream)
+        #     except yaml.YAMLError as exc:
+        #         print(exc)
         info_dict = benedict.from_yaml( f"{track_folder}/metadata.yaml")
+        # toc = time.perf_counter()
+        # print("bene", toc-tic)
         self.instrument = info_dict["stems"][stem]["midi_program_name"]
         self.instrument_cls = info_dict["stems"][stem]["inst_class"]
         self.sample_rate = None
@@ -59,12 +70,24 @@ class Track():
         self.seq_duration = seq_duration
         self.start_time = None
 
+        self.save_targets_file = f"data/targets/save_targets_{track_id:05d}.pickle"
+
         self.get_nb_audio_samples()
         self.init_targets()
     
     def init_targets(self):
         stem_ids = [int(stem[-7:-5]) for stem in os.listdir(f"{self.track_folder}/stems")]
-        self.targets = [Target(self.track_id, stem_id, split=self.split, seq_duration=self.seq_duration) for stem_id in stem_ids]
+        # tic = time.perf_counter()
+
+        if os.path.exists(self.save_targets_file):
+            with open(self.save_targets_file, 'rb') as targets_file:
+                self.targets = pickle.load(targets_file)
+        else:
+            self.targets = [Target(self.track_id, stem_id, split=self.split, seq_duration=self.seq_duration) for stem_id in stem_ids]
+            with open(self.save_targets_file, 'wb') as pickle_file:
+                pickle.dump(self.targets, pickle_file)
+        # toc = time.perf_counter()
+        # print("init target", toc-tic)
 
     def __repr__(self) -> str:
         return f"Track {self.track_id}" # with {[t.instrument for t in self.targets]}."
@@ -118,7 +141,7 @@ class SlakhDataset(torch.utils.data.Dataset):
         """
         self.target = target
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
-        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:40]
+        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:15]
         self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
         self.filter_target()
 
@@ -137,11 +160,11 @@ class SlakhDataset(torch.utils.data.Dataset):
 
         
     def __getitem__(self, index: int):
-        tic = time.perf_counter()
+        # tic = time.perf_counter()
         track = self.tracks[index]
         target = self.targets[index]
         x,y = track.get_selected_audio_seqs(target)
-        toc = time.perf_counter()
+        # toc = time.perf_counter()
         # print("get item",toc-tic)
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
 

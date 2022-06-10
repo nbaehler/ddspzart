@@ -14,6 +14,7 @@ google-cloud-sdk/
 google-cloud-cli*
 
 datasets/
+*.pickle
 
 workspace/slurm*
 workspace/ddsp_pretrained
