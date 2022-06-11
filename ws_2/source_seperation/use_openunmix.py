@@ -11,6 +11,9 @@ import time
 import yaml
 import pickle
 
+import tqdm
+import musdb
+
 DATASET_FOLDER = "/media/olaf/OlafSSD/03_Dokumente/01_epfl/01_cm/slakh2100_flac_redux"
 
 def get_sequence_from_start_and_duration(x: np.ndarray, seq_duration: float, start_time: float, sr: float) -> np.ndarray:
@@ -51,6 +54,7 @@ class Target():
         if start_time is None:
             duration = len(x) / sr
             start_time = random.uniform(0, duration - self.seq_duration)
+        # print(start_time)
         return get_sequence_from_start_and_duration(x,self.seq_duration,start_time,sr)
 
     def get_total_audio(self) -> np.ndarray:
@@ -82,10 +86,12 @@ class Track():
         if os.path.exists(self.save_targets_file):
             with open(self.save_targets_file, 'rb') as targets_file:
                 self.targets = pickle.load(targets_file)
+            # logging.info("Loaded targets from pickle file.")
         else:
             self.targets = [Target(self.track_id, stem_id, split=self.split, seq_duration=self.seq_duration) for stem_id in stem_ids]
             with open(self.save_targets_file, 'wb') as pickle_file:
                 pickle.dump(self.targets, pickle_file)
+            # logging.info("Initialized targets and loaded to pickle file.")
         # toc = time.perf_counter()
         # print("init target", toc-tic)
 
@@ -99,7 +105,8 @@ class Track():
         # print("get mix", toc-tic)
         start_time = random.uniform(0, self.duration - self.seq_duration)
         self.start_time = start_time
-        return get_sequence_from_start_and_duration(x,self.seq_duration,start_time,sr)
+        #self.start_time = 10 #FIXME REmove
+        return get_sequence_from_start_and_duration(x,self.seq_duration,self.start_time,sr)
 
     def get_nb_audio_samples(self):
         x, sr = mirdata.datasets.slakh.load_audio(self.audio_mix_folder)
@@ -125,6 +132,9 @@ class Track():
         mix_audio = self.get_mixed_audio()
         # toc = time.perf_counter()
         stem_audio = target.get_audio_seq(self.start_time)
+        if len(stem_audio) is 0 or (len(stem_audio) != self.seq_duration * self.sample_rate):
+            logging.info("Set stem_audio to zero.")
+            stem_audio = np.zeros_like(mix_audio)
         # toc2 = time.perf_counter()
         # print("get sel", toc-tic, toc2-toc)
         return mix_audio, stem_audio
@@ -141,20 +151,29 @@ class SlakhDataset(torch.utils.data.Dataset):
         """
         self.target = target
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
-        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:15]
-        self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
+        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:]
+        self.all_tracks = []
+        for id_str in tqdm.notebook.tqdm(track_folders):
+        # for id_str in tqdm.tqdm(track_folders):
+            self.all_tracks.append(Track(int(id_str[-5:]), split=split, seq_duration=seq_duration))
+        # self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
         self.filter_target()
 
     def filter_target(self):
-        des_targets = set()
-        des_tracks = set()
+        des_targets = list()
+        des_tracks = list()
         for tr,track in enumerate(self.all_tracks):
+            cnt = 0
             for ta, target in enumerate(track.targets):
                 if target.instrument == self.target:
-                    des_targets.add(target)
-                    des_tracks.add(track)
-        self.tracks = list(des_tracks)
-        self.targets = list(des_targets)
+                    if cnt >= 0: # not used currently
+                        des_targets.append(target)
+                        des_tracks.append(track)
+                    else:
+                        logging.info("Do not add.") # I just add all elements...
+                    cnt += 1
+        self.tracks = des_tracks
+        self.targets = des_targets
         if len(self.tracks) != len(self.targets):
             logging.warning("At least two targets are the same in this track.")
 
@@ -166,8 +185,42 @@ class SlakhDataset(torch.utils.data.Dataset):
         x,y = track.get_selected_audio_seqs(target)
         # toc = time.perf_counter()
         # print("get item",toc-tic)
+        # We are taking one channel
+        x = x[None]
+        y = y[None]
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
 
 
     def __len__(self):
         return len(self.targets)
+
+
+class SimpleMUSDBDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        subset='train',
+        split='train',
+        target='vocals',
+        seq_duration=None,
+    ):
+        """MUSDB18 Dataset wrapper
+        """
+        self.seq_duration = seq_duration
+        self.target = target
+        self.mus = musdb.DB(
+            download=True,
+            split=split,
+            subsets=subset,
+        )
+
+    def __getitem__(self, index):
+        track = self.mus[index]
+        track.chunk_start = random.uniform(0, track.duration - self.seq_duration)
+        track.chunk_duration = self.seq_duration
+        x = track.audio.T
+        y = track.targets[self.target].audio.T
+        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+
+
+    def __len__(self):
+        return len(self.mus)
