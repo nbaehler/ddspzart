@@ -73,8 +73,8 @@ class Track():
         self.audio_mix_folder = f"{self.track_folder}/mix.flac"
         self.seq_duration = seq_duration
         self.start_time = None
-
-        self.save_targets_file = f"data/targets/save_targets_{track_id:05d}.pickle"
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        self.save_targets_file = f"{file_dir}/data/targets/{split}/save_targets_{track_id:05d}.pickle"
 
         self.get_nb_audio_samples()
         self.init_targets()
@@ -82,7 +82,6 @@ class Track():
     def init_targets(self):
         stem_ids = [int(stem[-7:-5]) for stem in os.listdir(f"{self.track_folder}/stems")]
         # tic = time.perf_counter()
-
         if os.path.exists(self.save_targets_file):
             with open(self.save_targets_file, 'rb') as targets_file:
                 self.targets = pickle.load(targets_file)
@@ -153,10 +152,10 @@ class SlakhDataset(torch.utils.data.Dataset):
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
         track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:]
         self.all_tracks = []
-        for id_str in tqdm.notebook.tqdm(track_folders):
+        # for id_str in tqdm.notebook.tqdm(track_folders):
         # for id_str in tqdm.tqdm(track_folders):
-            self.all_tracks.append(Track(int(id_str[-5:]), split=split, seq_duration=seq_duration))
-        # self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
+            # self.all_tracks.append(Track(int(id_str[-5:]), split=split, seq_duration=seq_duration))
+        self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
         self.filter_target()
 
     def filter_target(self):
@@ -193,6 +192,7 @@ class SlakhDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.targets)
+
 
 
 class SimpleMUSDBDataset(torch.utils.data.Dataset):
