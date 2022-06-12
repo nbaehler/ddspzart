@@ -150,7 +150,7 @@ class SlakhDataset(torch.utils.data.Dataset):
         """
         self.target = target
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
-        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:]
+        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:15]
         self.all_tracks = []
         # for id_str in tqdm.notebook.tqdm(track_folders):
         # for id_str in tqdm.tqdm(track_folders):
