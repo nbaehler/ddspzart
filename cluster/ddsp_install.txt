@@ -1,6 +1,0 @@
-#!/bin/bash
-source ../.venv/bin/activate
-
-update_pip.sh
-pip install --upgrade pip
-pip install --upgrade ddsp

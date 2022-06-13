@@ -99,8 +99,7 @@ def timbre_transfer(in_file, model):
     if model in {"Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"}:
         # Pretrained models.
         PRETRAINED_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "ddsp_pretrained",
+            os.path.dirname(os.path.abspath(__file__)), "ddsp_pretrained",
         )
 
         # Copy over from gs:// for faster loading.
@@ -116,8 +115,7 @@ def timbre_transfer(in_file, model):
     else:
         # User models.
         USER_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "ddsp_user",
+            os.path.dirname(os.path.abspath(__file__)), "ddsp_user",
         )
 
         model_dir = os.path.join(USER_DIR, f"{model.lower()}")
