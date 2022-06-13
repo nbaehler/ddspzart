@@ -15,6 +15,10 @@
 
 # @title #Install and Import
 
+# @markdown Install ddsp, define some helper functions, and download the model. This transfers a lot of data and _should take a minute or two_.
+print("Installing from pip package...")
+# !pip install -qU ddsp==1.6.5
+
 # Ignore a bunch of deprecation warnings
 import warnings
 
@@ -36,12 +40,12 @@ from ddsp.colab.colab_utils import (
     specplot,
     upload,
     DEFAULT_SAMPLE_RATE,
-    audio_bytes_to_np,
 )
 
 
 from ddsp.training.postprocessing import detect_notes, fit_quantile_transform
 import gin
+from google.colab import files
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,19 +54,34 @@ import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 
 # Helper Functions
-sample_rate = DEFAULT_SAMPLE_RATE
-normalize_db = None
+sample_rate = DEFAULT_SAMPLE_RATE  # 16000
 
-with open("sample.wav", "rb") as wavfile:
-    audio_bytes = wavfile.read()
 
-audio = audio_bytes_to_np(
-    audio_bytes, sample_rate=sample_rate, normalize_db=normalize_db
-)
+print("Done!")
 
+# @title Record or Upload Audio
+# @markdown * Either record audio from microphone or upload audio from file (.mp3 or .wav)
+# @markdown * Audio should be monophonic (single instrument / voice)
+# @markdown * Extracts fundmanetal frequency (f0) and loudness features.
+
+record_or_upload = "Record"  # @param ["Record", "Upload (.mp3 or .wav)"]
+
+record_seconds = 5  # @param {type:"number", min:1, max:10, step:1}
+
+if record_or_upload == "Record":
+    audio = record(seconds=record_seconds)
+else:
+    # Load audio sample here (.mp3 or .wav3 file)
+    # Just use the first file.
+    filenames, audios = upload()
+    audio = audios[0]
 if len(audio.shape) == 1:
     audio = audio[np.newaxis, :]
 print("\nExtracting audio features...")
+
+# Plot.
+specplot(audio)
+play(audio)
 
 # Setup the session.
 ddsp.spectral_ops.reset_crepe()
@@ -93,12 +112,40 @@ _ = ax[2].set_xlabel("Time step [frame]")
 model = "Violin"  # @param ['Violin', 'Flute', 'Flute2', 'Trumpet', 'Tenor_Saxophone', 'Upload your own (checkpoint folder as .zip)']
 MODEL = model
 
-if model in {"Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"}:
+
+def find_model_dir(dir_name):
+    # Iterate through directories until model directory is found
+    for root, dirs, filenames in os.walk(dir_name):
+        for filename in filenames:
+            if filename.endswith(".gin") and not filename.startswith("."):
+                model_dir = root
+                break
+    return model_dir
+
+
+if model in ("Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"):
     # Pretrained models.
     PRETRAINED_DIR = "/content/pretrained"
+    # Copy over from gs:// for faster loading.
+    #   !rm -r $PRETRAINED_DIR &> /dev/null
+    #   !mkdir $PRETRAINED_DIR &> /dev/null
     GCS_CKPT_DIR = "gs://ddsp/models/timbre_transfer_colab/2021-07-08"
-    model_dir = os.path.join(GCS_CKPT_DIR, f"solo_{model.lower()}_ckpt")
+    model_dir = os.path.join(GCS_CKPT_DIR, "solo_%s_ckpt" % model.lower())
+
+    #   !gsutil cp $model_dir/* $PRETRAINED_DIR &> /dev/null
     model_dir = PRETRAINED_DIR
+    gin_file = os.path.join(model_dir, "operative_config-0.gin")
+
+else:
+    # User models.
+    UPLOAD_DIR = "/content/uploaded"
+    #   !mkdir $UPLOAD_DIR
+    uploaded_files = files.upload()
+
+    for fnames in uploaded_files.keys():
+        print("Unzipping... {}".format(fnames))
+        # !unzip -o "/content/$fnames" -d $UPLOAD_DIR &> /dev/null
+    model_dir = find_model_dir(UPLOAD_DIR)
     gin_file = os.path.join(model_dir, "operative_config-0.gin")
 
 
@@ -111,7 +158,7 @@ try:
         with tf.io.gfile.GFile(dataset_stats_file, "rb") as f:
             DATASET_STATS = pickle.load(f)
 except Exception as err:
-    print(f"Loading dataset statistics from pickle failed: {err}.")
+    print("Loading dataset statistics from pickle failed: {}.".format(err))
 
 
 # Parse gin config,
@@ -141,12 +188,11 @@ n_samples = time_steps * hop_size
 # print('')
 
 gin_params = [
-    f"Harmonic.n_samples = {n_samples}",
-    f"FilteredNoise.n_samples = {n_samples}",
-    f"F0LoudnessPreprocessor.time_steps = {time_steps}",
-    "oscillator_bank.use_angular_cumsum = True",
+    "Harmonic.n_samples = {}".format(n_samples),
+    "FilteredNoise.n_samples = {}".format(n_samples),
+    "F0LoudnessPreprocessor.time_steps = {}".format(time_steps),
+    "oscillator_bank.use_angular_cumsum = True",  # Avoids cumsum accumulation errors.
 ]
-
 
 with gin.unlock_config():
     gin.parse_config(gin_params)
@@ -297,7 +343,6 @@ ax.plot(librosa.hz_to_midi(audio_features["f0_hz"][:TRIM]))
 ax.plot(librosa.hz_to_midi(audio_features_mod["f0_hz"][:TRIM]))
 ax.set_ylabel("f0 [midi]")
 _ = ax.legend(["Original", "Adjusted"])
-
 
 # @title #Resynthesize Audio
 

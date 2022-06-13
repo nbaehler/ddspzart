@@ -60,11 +60,11 @@ install:
 install-dev:
 	@poetry config virtualenvs.create false
 	@poetry install
-	@./scripts/gdrive.sh https://drive.google.com/file/d/10i8z1zH60a2coKEst47lELdkvZUmgd1b/view?usp=sharing
-	@unzip resource.zip
-	@mv resource/* tests/resource
-	@rm -d resource
-	@rm resource.zip
+	# @./scripts/gdrive.sh https://drive.google.com/file/d/10i8z1zH60a2coKEst47lELdkvZUmgd1b/view?usp=sharing
+	# @unzip resource.zip
+	# @mv resource/* tests/resource
+	# @rm -d resource
+	# @rm resource.zip
 
 .PHONY: clean
 clean:
