@@ -20,7 +20,7 @@ python omni_transcribe.py
 source deactivate
 
 source ../.ddsp_venv/bin/activate
-python timbre_transfer.py 1788_synth.wav Violin
+python ddsp_timbre_transfer.py 1788_synth.wav Violin
 source deactivate
 
 echo FINISHED at $(date)
