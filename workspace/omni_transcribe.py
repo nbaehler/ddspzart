@@ -25,9 +25,9 @@ def transcribe(
 
     \b
     Example Usage
-    $ omnizart music transcribe \ 
-        # example.wav \ 
-        --model-path path/to/model \ 
+    $ omnizart music transcribe \
+        # example.wav \
+        --model-path path/to/model \
         --output example.mid
     """
     silence_tensorflow()
@@ -83,5 +83,5 @@ if __name__ == "__main__":
 
     filenames = glob.glob(f"./{filename}_*.mid")
 
-    # for filename in filenames:
-    #     synth(f"./{filename}")
+    for filename in filenames:
+        synth(f"./{filename}")

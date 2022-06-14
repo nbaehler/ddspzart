@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=0:5:0
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=1
 #SBATCH --partition=debug
 #SBATCH --gres=gpu:1
 
@@ -15,10 +15,8 @@ echo STARTING AT $(date)
 
 . ../cluster/load.sh
 
-# omnizart drum transcribe sample.wav
-# omnizart chord transcribe sample.wav
-# omnizart music transcribe sample.wav
-
-python timbre_transfer.py
+source ../.omni_venv/bin/activate
+python omni_transcribe.py
+source deactivate
 
 echo FINISHED at $(date)

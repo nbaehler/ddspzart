@@ -6,10 +6,15 @@
 .spleeter_venv
 
 workspace/slurm*
+
 workspace/ddsp_pretrained
 workspace/ddsp_user
 workspace/pretrained_models
+
+workspace/.cookie
 workspace/google-cloud-sdk
+workspace/google-cloud-cli-386.0.0-linux-x86_64.tar.gz
+
 workspace/*.mid
 workspace/*.csv
 workspace/*.wav

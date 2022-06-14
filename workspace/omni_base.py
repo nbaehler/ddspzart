@@ -37,7 +37,7 @@ class BaseTranscription(metaclass=ABCMeta):
         """Get the model from the python source file.
 
         This is only for those customized models that can't export *arch.yaml* file,
-        and hence need to instanitiate the model from python class, which is not
+        and hence need to instantiate the model from python class, which is not
         that desirable as the architecture is not recorded in a stand-alone file.
 
         Another way is using model.save() method to export .pb format architecture
@@ -65,11 +65,11 @@ class BaseTranscription(metaclass=ABCMeta):
             model = tf.keras.models.load_model(
                 model_path, custom_objects=custom_objects
             )
-        except (OSError):
+        except OSError as e:
             raise FileNotFoundError(
                 f"Checkpoint file not found: {model_path}/variables/variables.data*. Perhaps not yet downloaded?\n"
                 "Try execute 'omnizart download-checkpoints'"
-            )
+            ) from e
 
         return model, settings
 
@@ -86,7 +86,7 @@ class BaseTranscription(metaclass=ABCMeta):
             raise FileNotFoundError(f"The given path doesn't exist: {model_path}.")
         elif not os.path.basename(model_path).startswith(
             self.settings.model.save_prefix.lower()
-        ) and not set(["arch.yaml", "weights.h5", "configurations.yaml"]).issubset(
+        ) and not {"arch.yaml", "weights.h5", "configurations.yaml"}.issubset(
             os.listdir(model_path)
         ):
 
@@ -95,7 +95,7 @@ class BaseTranscription(metaclass=ABCMeta):
             prefix = self.settings.model.save_prefix.lower()
             cand_dirs = [c_dir for c_dir in dirs if c_dir.startswith(prefix)]
 
-            if len(cand_dirs) == 0:  # pylint: disable=R1720
+            if not cand_dirs:  # pylint: disable=R1720
                 raise FileNotFoundError(
                     f"No checkpoint of {prefix} found in {model_path}"
                 )
@@ -320,10 +320,10 @@ class BaseDatasetLoader:
         for hdf in self.hdf_files:
             try:
                 self.hdf_refs[hdf] = h5py.File(hdf, "r")
-            except OSError:
+            except OSError as e:
                 msg = f"Resource temporarily unavailable due to file being opened without closing. Resource: {hdf}"
                 logger.error(msg)
-                raise OSError(msg)
+                raise OSError(msg) from e
         self.num_samples = num_samples
 
         # Initialize indices of index-to-file mapping to ensure all samples
@@ -384,8 +384,7 @@ class BaseDatasetLoader:
 
     def get_dataset(self, batch_size, output_types=None, output_shapes=None):
         def gen_wrapper():
-            for data in self:
-                yield data
+            yield from self
 
         return (
             tf.data.Dataset.from_generator(

@@ -24,7 +24,7 @@ import time
 
 import ddsp
 import ddsp.training
-from ddsp.colab.colab_utils import (
+from ddsp_colab_utils import (
     auto_tune,
     get_tuning_factor,
     specplot,
@@ -99,23 +99,28 @@ def timbre_transfer(in_file, model):
     if model in {"Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"}:
         # Pretrained models.
         PRETRAINED_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "ddsp_pretrained",
+            os.path.dirname(os.path.abspath(__file__)),
+            "ddsp_pretrained",
         )
 
         # Copy over from gs:// for faster loading.
-        os.system(f"rm -rf {PRETRAINED_DIR}")
-        os.system(f"mkdir {PRETRAINED_DIR}")
+        if not os.path.exists(PRETRAINED_DIR):
+            # os.system(f"rm -rf {PRETRAINED_DIR}")
+            os.system(f"mkdir {PRETRAINED_DIR}")
+
         GCS_CKPT_DIR = "gs://ddsp/models/timbre_transfer_colab/2021-07-08"
         model_dir = os.path.join(GCS_CKPT_DIR, f"solo_{model.lower()}_ckpt")
 
         PRETRAINED_DIR = os.path.join(PRETRAINED_DIR, f"solo_{model.lower()}")
-        os.system(f"mkdir {PRETRAINED_DIR}")
-        os.system(f"gsutil cp {model_dir}/* {PRETRAINED_DIR}")
+        if not os.path.exists(PRETRAINED_DIR):
+            os.system(f"mkdir {PRETRAINED_DIR}")
+            os.system(f"gsutil cp {model_dir}/* {PRETRAINED_DIR}")
         model_dir = PRETRAINED_DIR
     else:
         # User models.
         USER_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "ddsp_user",
+            os.path.dirname(os.path.abspath(__file__)),
+            "ddsp_user",
         )
 
         model_dir = os.path.join(USER_DIR, f"{model.lower()}")
