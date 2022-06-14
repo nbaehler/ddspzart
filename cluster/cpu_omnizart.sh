@@ -10,7 +10,7 @@
 
 echo STARTING AT $(date)
 
-. ../cluster/load.sh
+. ../cluster/cpu_load.sh
 
 source ../.omni_venv/bin/activate
 python omni_transcribe.py

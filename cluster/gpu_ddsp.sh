@@ -13,7 +13,7 @@
 
 echo STARTING AT $(date)
 
-. ../cluster/load.sh
+. ../cluster/gpu_load.sh
 
 source ../.ddsp_venv/bin/activate
 python timbre_transfer.py

@@ -13,7 +13,7 @@
 
 echo STARTING AT $(date)
 
-. ../cluster/load.sh
+. ../cluster/gpu_load.sh
 
 source ../.spleeter_venv/bin/activate
 spleeter separate -p spleeter:2stems -o output audio_example.mp3
