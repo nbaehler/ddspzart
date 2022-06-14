@@ -74,7 +74,7 @@ def main():
     VALID_EVERY_N_EPOCH = 5
     
     from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir="../source_seperation/runs/exp4_trumpet_with_valid_2")
+    writer = SummaryWriter(log_dir="../source_seperation/runs/exp7_test_cluster")
     epoch=0
 
     from torch.optim.lr_scheduler import StepLR
@@ -98,7 +98,7 @@ def main():
 
     keep_epoch = epoch
 
-    NUM_EPOCH = 10
+    NUM_EPOCH = 5
 
     tic = time.perf_counter()
     tic2 = time.process_time()
