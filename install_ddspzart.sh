@@ -35,3 +35,4 @@ pip install --upgrade tensorflow
 echo "DDSP installed successfully (maybe)!"
 
 pip install notebook
+pip install ipywidgets
