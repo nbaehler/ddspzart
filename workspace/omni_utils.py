@@ -278,7 +278,7 @@ def parallel_generator(func, input_list, max_workers=2, use_thread=False, chunk_
 def synth_midi(midi_path, output_path, sampling_rate=44100, sf2_path=SOUNDFONT_PATH):
     """Synthesize MIDI into wav audio."""
     midi = pretty_midi.PrettyMIDI(midi_path)
-    raw_wav = midi.fluidsynth(fs=sampling_rate, sf2_path=sf2_path).astype(np.int16)
+    raw_wav = midi.fluidsynth(fs=sampling_rate, sf2_path=sf2_path)
     wave.write(output_path, sampling_rate, raw_wav)
 
 

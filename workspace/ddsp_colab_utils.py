@@ -234,7 +234,7 @@ def get_tuning_factor(f0_midi, f0_confidence, mask_on):
     cost_diffs = np.abs(midi_diffs)
     cost_diffs = np.mean(weights * cost_diffs, axis=0)
 
-    ## Computes mininmum "note" transitions.
+    ## Computes minimum "note" transitions.
     f0_at = f0_midi[mask_on][:, np.newaxis] - midi_diffs
     f0_at_diffs = np.diff(f0_at, axis=0)
     deltas = (f0_at_diffs != 0.0).astype(np.float)
@@ -275,10 +275,8 @@ def auto_tune(f0_midi, tuning_factor, mask_on, amount=0.0, chromatic=False):
         midi_diff = np.take_along_axis(f0_diff_tn, note_idx[:, np.newaxis], axis=-1)[
             :, 0
         ]
-        print(
-            "Autotuning... \nInferred key: {}  "
-            "\nTuning offset: {} cents".format(scale, int(tuning_factor * 100))
-        )
+        print(f"Autotuning... \nInferred key: {scale}  \nTuning offset: {int(tuning_factor * 100)} cents")
+
 
     # Adjust the midi signal.
     return f0_midi - amount * midi_diff

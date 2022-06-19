@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# For the VM
 # sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev
 
 # path=$(pwd)
@@ -32,3 +33,5 @@ pip install --upgrade ddsp
 pip install --upgrade tensorflow
 
 echo "DDSP installed successfully (maybe)!"
+
+pip install notebook
