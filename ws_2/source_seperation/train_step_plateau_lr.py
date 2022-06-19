@@ -15,26 +15,59 @@ import os
 import pickle 
 import openunmix
 import torch.nn as nn
-
+import time
+from torch.optim.lr_scheduler import StepLR,ReduceLROnPlateau
+from torch.utils.tensorboard import SummaryWriter
 import torch.optim as optim
 
 from use_openunmix import SlakhDataset
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def main():
+    
+    VALID_EVERY_N_EPOCH = 1
+    TARGET = "Flute"
+    NUM_EPOCH = 200
+    CKPT_PATH = f"../source_seperation/data/checkpoints/exp11_cluster_flute.pt"
+    #CKPT_LOAD_PATH = f"../source_seperation/data/checkpoints/exp8_cluster_flute.pt"
+    
+    writer = SummaryWriter(log_dir="../source_seperation/runs/exp11_cluster_flute")
+    
+    use_cuda = torch.cuda.is_available()
+    torch.manual_seed(42)
 
-    TARGET = "Trumpet"
+    device = torch.device("cuda" if use_cuda else "cpu")
+    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
+    pin_memory = True if use_cuda else False
+
+    #device = "cpu" #FIXME Remove
+    
+    print(TARGET)
+    print(device)
+    
+    
+    tic = time.perf_counter()
+    
     print("Get datasets")
     train_dataset = SlakhDataset(target=TARGET, seq_duration=5.0)
-    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
+    print(train_dataset.targets[0])
+    print("length", len(train_dataset))
 
     validation_dataset = SlakhDataset(target=TARGET,split='validation',seq_duration=5.0)
-    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True)
+    test_dataset = SlakhDataset(target=TARGET,split='test',seq_duration=5.0)
+    
+    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=pin_memory)
+    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=pin_memory)
+    
+    test_sampler = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=True,pin_memory=pin_memory,num_workers=4)
 
     stft = openunmix.transforms.TorchSTFT() # -> shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
     spec = openunmix.transforms.ComplexNorm(mono=True) # -> shape (nb_samples, nb_channels(=1 if mono), nb_bins, nb_frames)
     transform = nn.Sequential(stft, spec)
-
+  
+    toc = time.perf_counter()
+    print("Needed time: ", toc-tic)
+    
     print("Get scaling")
     scaler = sklearn.preprocessing.StandardScaler()
 
@@ -48,15 +81,8 @@ def main():
         1e-4*np.max(scaler.scale_)
     )
     mean = scaler.mean_
-
-    print("Set up model")
-    use_cuda = torch.cuda.is_available()
-    torch.manual_seed(42)
-
-    device = torch.device("cuda" if use_cuda else "cpu")
-    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-
-    #device = "cpu" #FIXME Remove
+    
+    print("Needed time: ", toc-tic)
 
     print("Build model")
     unmix = openunmix.model.OpenUnmix(
@@ -68,21 +94,22 @@ def main():
         nb_bins=2048+1
     ).to(device)
 
-    optimizer = optim.RMSprop(unmix.parameters(), lr=0.005)
-    criterion = torch.nn.MSELoss()
-
-    VALID_EVERY_N_EPOCH = 5
+    #optimizer = optim.RMSprop(unmix.parameters(), lr=0.003)
+    optimizer = optim.Adam(unmix.parameters(), lr=0.05)
     
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir="../source_seperation/runs/exp4_trumpet_with_valid_2")
+    criterion = torch.nn.MSELoss()
+    
+    
     epoch=0
+    #checkpoint = torch.load(CKPT_LOAD_PATH)
+    #unmix.load_state_dict(checkpoint['model_state_dict'])
+    #optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    #epoch = checkpoint['epoch']
+    #loss = checkpoint['loss'] 
 
-    from torch.optim.lr_scheduler import StepLR
-    scheduler = StepLR(optimizer, step_size=30, gamma=0.8)
+    #scheduler = StepLR(optimizer, step_size=30, gamma=0.8)
+    scheduler = ReduceLROnPlateau(optimizer, 'min', factor=0.25,patience=30, verbose=True)
 
-    import time
-    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=4)
-    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True, num_workers=4)
     stft = openunmix.transforms.TorchSTFT() 
     spec = openunmix.transforms.ComplexNorm(mono=True)
     transform = nn.Sequential(stft, spec).to(device)
@@ -98,11 +125,10 @@ def main():
 
     keep_epoch = epoch
 
-    NUM_EPOCH = 150
-
-    tic = time.perf_counter()
-    tic2 = time.process_time()
+    
     for epoch in range(keep_epoch,NUM_EPOCH+keep_epoch):
+        tic = time.perf_counter()
+        tic2 = time.process_time()
         print("Epoch: ", epoch)
         for x, y in train_sampler: #tqdm.notebook.tqdm(train_sampler): 
             x, y = x.to(device), y.to(device)
@@ -115,8 +141,7 @@ def main():
             optimizer.step()
             losses.update(loss.item(), Y.size(1))
         writer.add_scalar("Loss/train", losses.avg, epoch)
-        print(f"Loss={losses.avg:.3f}", "LR: ", scheduler.get_last_lr())
-        scheduler.step()
+        #print(f"Loss={losses.avg:.3f}", "LR: ", scheduler.get_last_lr())
         keep_epoch = epoch + 1
 
         toc = time.perf_counter()
@@ -137,28 +162,26 @@ def main():
                     losses_valid.update(loss_valid.item(), Y.size(1))
                 writer.add_scalar("Loss/validation", losses_valid.avg, epoch)
                 print(f"validation: {losses_valid.avg:.3f}")
-            unmix.train()           
+            unmix.train()      
+          
+        scheduler.step(losses_valid.avg)     
 
     writer.flush()
     writer.close()
 
-
-    PATH = f"../source_seperation/data/checkpoints/exp07_flute.pt"
     torch.save({
             'epoch': epoch,
             'model_state_dict': unmix.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': loss,
-            }, PATH)
+            }, CKPT_PATH)
 
     print("Saved model")
 
     print("testing...")
     # Testing
-    test_dataset = SlakhDataset(split='test',seq_duration=5.0)
-    test_sampler = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=True)
 
-    for epoch in range(4):
+    for epoch in range(5):
         for x, y in test_sampler:
             x, y = x.to(device), y.to(device)
             X = transform(x)
