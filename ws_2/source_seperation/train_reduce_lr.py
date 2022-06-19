@@ -36,15 +36,6 @@ def main():
     use_cuda = torch.cuda.is_available()
     torch.manual_seed(42)
 
-<<<<<<< HEAD:ws_2/source_seperation/train_script.py
-    TARGET = "Trumpet"
-    print("Get datasets")
-    train_dataset = SlakhDataset(target=TARGET, seq_duration=5.0)
-    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
-
-    validation_dataset = SlakhDataset(target=TARGET,split='validation',seq_duration=5.0)
-    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True)
-=======
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     pin_memory = True if use_cuda else False
@@ -70,7 +61,6 @@ def main():
     validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=pin_memory)
     
     test_sampler = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=True,pin_memory=pin_memory,num_workers=4)
->>>>>>> 9aea165d866c356127b52523d938dd950f32392b:ws_2/source_seperation/train_reduce_lr.py
 
     stft = openunmix.transforms.TorchSTFT() # -> shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
     spec = openunmix.transforms.ComplexNorm(mono=True) # -> shape (nb_samples, nb_channels(=1 if mono), nb_bins, nb_frames)
@@ -92,20 +82,8 @@ def main():
         1e-4*np.max(scaler.scale_)
     )
     mean = scaler.mean_
-<<<<<<< HEAD:ws_2/source_seperation/train_script.py
-
-    print("Set up model")
-    use_cuda = torch.cuda.is_available()
-    torch.manual_seed(42)
-
-    device = torch.device("cuda" if use_cuda else "cpu")
-    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-
-    #device = "cpu" #FIXME Remove
-=======
     
     print("Needed time: ", toc-tic)
->>>>>>> 9aea165d866c356127b52523d938dd950f32392b:ws_2/source_seperation/train_reduce_lr.py
 
     print("Build model")
     unmix = openunmix.model.OpenUnmix(
@@ -148,14 +126,7 @@ def main():
 
     keep_epoch = epoch
 
-<<<<<<< HEAD:ws_2/source_seperation/train_script.py
-    NUM_EPOCH = 150
-
-    tic = time.perf_counter()
-    tic2 = time.process_time()
-=======
     
->>>>>>> 9aea165d866c356127b52523d938dd950f32392b:ws_2/source_seperation/train_reduce_lr.py
     for epoch in range(keep_epoch,NUM_EPOCH+keep_epoch):
         tic = time.perf_counter()
         tic2 = time.process_time()
@@ -200,11 +171,6 @@ def main():
     writer.flush()
     writer.close()
 
-<<<<<<< HEAD:ws_2/source_seperation/train_script.py
-
-    PATH = f"../source_seperation/data/checkpoints/exp07_flute.pt"
-=======
->>>>>>> 9aea165d866c356127b52523d938dd950f32392b:ws_2/source_seperation/train_reduce_lr.py
     torch.save({
             'epoch': epoch,
             'model_state_dict': unmix.state_dict(),
