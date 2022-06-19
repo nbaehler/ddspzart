@@ -1,6 +1,15 @@
 .venv
 .ddsp_venv
 .spleeter_venv
+.idea
+*/.openunmix*
+*/.source_sep_venv*
+*__pycache__*
+google-cloud-sdk/
+google-cloud-cli*
+
+datasets/
+*.pickle
 
 .vscode
 
@@ -20,4 +29,3 @@ workspace/data/*
 !workspace/data/1788_example*
 
 newrelic_agent.log
-__pycache__/

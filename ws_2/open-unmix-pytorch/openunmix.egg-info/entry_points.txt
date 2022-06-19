@@ -1,0 +1,2 @@
+[console_scripts]
+umx = openunmix.cli:separate
