@@ -258,29 +258,6 @@ class DiverseLoudnessAugmentationTransformer(DiverseLoudnessTransformer):
         def get_factor(self) -> np.uint:
             return np.random.uniform(1 / self.f_max, self.f_max)
 
-# class DiverseLoudnessAugmentationTransformer(Transformer[np.ndarray, np.ndarray]):
-
-#     def __init__(self, f_max: float = 1, Tc: float = 1.0, sample_rate: int = None):
-#         super().__init__(f'diverse_loudness_augmentation{f_max}')
-#         self.f_max = f_max
-#         self.sample_rate = sample_rate if sample_rate is not None else AugmentationConfig.AUDIO_SAMPLE_RATE
-#         self.N = int(Tc * self.sample_rate)
-
-#     def get_factor(self) -> np.uint:
-#         return np.random.uniform(1 / self.f_max, self.f_max)
-
-#     def transform(self, x: np.ndarray) -> np.ndarray:
-#         self.f = self.get_factor()
-#         weigthing = np.random.randint(0,2,len(x))
-#         N = self.N
-#         weigthing = 2*np.convolve(weigthing, np.ones(N)/N, mode='valid') - 1 
-#         weigthing = np.concatenate((weigthing[0:(len(x)-len(weigthing))//2],weigthing,weigthing[-(len(x)-len(weigthing))//2:]))
-#         weigthing = weigthing - np.mean(weigthing)
-#         weigthing -= np.min(weigthing)
-#         weigthing *= self.f / np.max(weigthing)
-
-#         return x * weigthing
-
 class AdditiveGaussianNoiseTransformer(Transformer[np.ndarray, np.ndarray]):
     def __init__(self, mean: float = 0, sigma: float = 0):
         super().__init__(f'additive_gaussian_noise_{mean}_{sigma}')
