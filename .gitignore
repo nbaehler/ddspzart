@@ -17,7 +17,6 @@ workspace/google-cloud-cli-386.0.0-linux-x86_64.tar.gz
 workspace/data/*
 !workspace/data/test.wav
 !workspace/data/sample.wav
-!workspace/data/1788.wav
 !workspace/data/1788_example*
 
 newrelic_agent.log

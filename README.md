@@ -170,7 +170,8 @@ The jupyter notebook `workspace/ddspzart.ipynb` finally implements the entire
 pipeline of the source separation, timbre transfer and recombining the single
 tracks. It takes some time to be run hence, we include all the files of an
 example run on a excerpt of a piece by Bach for a string ensemble in
-`workspace/data`.
+`workspace/data` called `1788_example.wav`. The original file can again be found
+as `1788.wav` on our Google Drive.
 
 All those (intermediate) results can be played in the Jupyter notebook
 `workspace/ddspzart_example_run_results.ipynb`.
@@ -182,4 +183,6 @@ All those (intermediate) results can be played in the Jupyter notebook
 ## Conclusion
 
 Yes we are aware of the fact that our results are not very good (but absolutely
-hilarious!!!).
+hilarious!!!). This shows us how difficult the task still is to solve. But
+nonetheless we have learnt a lot on our quest to generate some truly funny
+timbre transfer results!
