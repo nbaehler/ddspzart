@@ -9,7 +9,7 @@
 .spleeter_venv
 .idea
 */.openunmix*
-*/.source_sep_venv
+*/.source_sep_venv*
 
 google-cloud-sdk/
 google-cloud-cli*
