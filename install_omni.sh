@@ -1,17 +1,18 @@
-#/bin/bash
+#!/bin/bash
 
-sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev fluidsynth
+# On VM:
+# sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev fluidsynth
 
-path=$(pwd)
-cd /usr/bin
-sudo ln -s llvm-config-8 llvm-config
-cd $path
+# path=$(pwd)
+# cd /usr/bin
+# sudo ln -s llvm-config-8 llvm-config
+# cd $path
 
-export LLVM_CONFIG_PATH=/usr/bin/llvm-config
+# export LLVM_CONFIG_PATH=/usr/bin/llvm-config
 
 cd omnizart
 make install
-source ../.omni_venv/bin/activate
+source ../.venv/bin/activate
 pip install numpy
 pip install pyFluidSynth
 pip install platformdirs

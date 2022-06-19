@@ -1,4 +1,3 @@
-
 # Temporary files of Vim
 *.swp
 *.swo
@@ -43,7 +42,7 @@ soundfonts.sf2
 pretrained_models/
 
 # Other files
-checkpoints/
+**/variables/variables.data-00000-of-00001
 test.sh
 *.ipynb
 *.pptx

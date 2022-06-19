@@ -7,7 +7,7 @@ set -e
 # The script will first create a virtual environment, separating from the system's environment.
 # There are two approaches for installing the 'omnizart' pacakage: poetry or pip.
 # The former relies on the third-party package 'poetry', and the latter is a built-in package.
-# This script uses 'python -m venv .omni_venv' to create the virutal environment for both
+# This script uses 'python -m venv .venv' to create the virutal environment for both
 # installation approaches.
 #
 # After creating virtual env with venv, the script automatically installs the
@@ -52,8 +52,8 @@ activate_venv_with_poetry() {
 }
 
 activate_venv_with_venv() {
-    python3 -m venv ../.omni_venv
-    source ../.omni_venv/bin/activate
+    python3 -m venv ../.venv
+    source ../.venv/bin/activate
 }
 
 install_with_poetry() {
@@ -115,5 +115,5 @@ fi
 omnizart download-checkpoints
 
 if [ "$USE_VENV" = "true" ]; then
-    echo -e "\nTo activate the environment, run the following command:\n source ../.omni_venv/bin/activate"
+    echo -e "\nTo activate the environment, run the following command:\n source ../.venv/bin/activate"
 fi

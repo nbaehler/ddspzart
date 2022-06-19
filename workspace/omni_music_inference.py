@@ -12,7 +12,7 @@ from omnizart.constants.midi import (
     MUSICNET_INSTRUMENT_PROGRAMS,
     MIDI_PROGRAM_NAME_MAPPING,
 )
-from omnizart.utils import get_logger
+from omni_utils import get_logger
 
 
 logger = get_logger("Music Inference")
@@ -499,7 +499,7 @@ def multi_inst_note_inference(
             normed_ch.append(cha)
 
         confidence = "std: {:.3f} ent: {:.3f} mult: {:.3f}".format(
-            std / ch_per_inst, ent / ch_per_inst, std * ent / ch_per_inst**2
+            std / ch_per_inst, ent / ch_per_inst, std * ent / ch_per_inst ** 2
         )
         logger.debug("Instrument confidence: %s", confidence)
         if iters > 1 and (std / ch_per_inst < inst_th):

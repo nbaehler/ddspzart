@@ -1,29 +1,37 @@
 .venv
-.vscode
-#*.ipynb*
-
-*__pycache__*
-
-.omni_venv
 .ddsp_venv
 .spleeter_venv
 .idea
 */.openunmix*
 */.source_sep_venv*
-
+*__pycache__*
 google-cloud-sdk/
 google-cloud-cli*
 
 datasets/
 *.pickle
 
+.vscode
+
 workspace/slurm*
+
 workspace/ddsp_pretrained
 workspace/ddsp_user
 workspace/pretrained_models
+
+workspace/.cookie
 workspace/google-cloud-sdk
+workspace/google-cloud-cli-386.0.0-linux-x86_64.tar.gz
+
 workspace/*.mid
+!workspace/sample.mid
+
 workspace/*.csv
+
 workspace/*.wav
+!workspace/test.wav
+!workspace/sample.wav
+
+workspace/*.png
 
 newrelic_agent.log

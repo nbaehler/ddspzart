@@ -24,7 +24,7 @@ import time
 
 import ddsp
 import ddsp.training
-from ddsp.colab.colab_utils import (
+from ddsp_colab_utils import (
     auto_tune,
     get_tuning_factor,
     specplot,
@@ -41,6 +41,10 @@ import numpy as np
 import pickle
 import tensorflow.compat.v2 as tf
 
+# gpus = tf.config.list_physical_devices(device_type = 'GPU')
+# tf.config.experimental.set_memory_growth(gpus[0], True)
+# tf.config.set_visible_devices([], 'GPU')
+
 from scipy.io.wavfile import write
 
 from tensorflow.python.ops.numpy_ops import np_config
@@ -53,7 +57,9 @@ def timbre_transfer(in_file, model):
     sample_rate = DEFAULT_SAMPLE_RATE
     normalize_db = None
 
-    input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), in_file)
+    workspace = os.path.dirname(os.path.abspath(__file__))
+
+    input_file = os.path.join(workspace, in_file)
 
     with open(input_file, "rb") as wavfile:
         audio_bytes = wavfile.read()
@@ -66,10 +72,11 @@ def timbre_transfer(in_file, model):
         audio = audio[np.newaxis, :]
     print("\nExtracting audio features...")
 
-    # Plot
-    specplot(audio)
-    plt.title("Original")
-    plt.savefig("original_spectrum.png")
+    # # Plot
+    # specplot(audio)
+    # plt.title("Original")
+    # plt.savefig(os.path.join(workspace, "original_spectrum.png"))
+
     # Setup the session.
     ddsp.spectral_ops.reset_crepe()
 
@@ -80,43 +87,46 @@ def timbre_transfer(in_file, model):
     audio_features_mod = None
     print("Audio features took %.1f seconds" % (time.time() - start_time))
 
-    TRIM = -15
-    # Plot Features.
-    fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(6, 8))
-    ax[0].plot(audio_features["loudness_db"][:TRIM])
-    ax[0].set_ylabel("loudness_db")
+    # TRIM = -15
+    # # Plot Features.
+    # fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(6, 8))
+    # ax[0].plot(audio_features["loudness_db"][:TRIM])
+    # ax[0].set_ylabel("loudness_db")
 
-    ax[1].plot(librosa.hz_to_midi(audio_features["f0_hz"][:TRIM]))
-    ax[1].set_ylabel("f0 [midi]")
+    # ax[1].plot(librosa.hz_to_midi(audio_features["f0_hz"][:TRIM]))
+    # ax[1].set_ylabel("f0 [midi]")
 
-    ax[2].plot(audio_features["f0_confidence"][:TRIM])
-    ax[2].set_ylabel("f0 confidence")
-    _ = ax[2].set_xlabel("Time step [frame]")
+    # ax[2].plot(audio_features["f0_confidence"][:TRIM])
+    # ax[2].set_ylabel("f0 confidence")
+    # _ = ax[2].set_xlabel("Time step [frame]")
 
-    fig.savefig("features.png")
+    # fig.savefig(os.path.join(workspace, "features.png"))
 
     # @param ['Violin', 'Flute', 'Flute2', 'Trumpet', 'Tenor_Saxophone']
     if model in {"Violin", "Flute", "Flute2", "Trumpet", "Tenor_Saxophone"}:
         # Pretrained models.
         PRETRAINED_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            workspace,
             "ddsp_pretrained",
         )
 
         # Copy over from gs:// for faster loading.
-        os.system(f"rm -rf {PRETRAINED_DIR}")
-        os.system(f"mkdir {PRETRAINED_DIR}")
+        if not os.path.exists(PRETRAINED_DIR):
+            # os.system(f"rm -rf {PRETRAINED_DIR}")
+            os.system(f"mkdir {PRETRAINED_DIR}")
+
         GCS_CKPT_DIR = "gs://ddsp/models/timbre_transfer_colab/2021-07-08"
         model_dir = os.path.join(GCS_CKPT_DIR, f"solo_{model.lower()}_ckpt")
 
         PRETRAINED_DIR = os.path.join(PRETRAINED_DIR, f"solo_{model.lower()}")
-        os.system(f"mkdir {PRETRAINED_DIR}")
-        os.system(f"gsutil cp {model_dir}/* {PRETRAINED_DIR}")
+        if not os.path.exists(PRETRAINED_DIR):
+            os.system(f"mkdir {PRETRAINED_DIR}")
+            os.system(f"gsutil cp {model_dir}/* {PRETRAINED_DIR}")
         model_dir = PRETRAINED_DIR
     else:
         # User models.
         USER_DIR = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            workspace,
             "ddsp_user",
         )
 
@@ -285,35 +295,35 @@ def timbre_transfer(in_file, model):
     audio_features_mod = shift_ld(audio_features_mod, loudness_shift)
     audio_features_mod = shift_f0(audio_features_mod, pitch_shift)
 
-    # Plot Features.
-    has_mask = int(mask_on is not None)
-    n_plots = 3 if has_mask else 2
-    fig, axes = plt.subplots(
-        nrows=n_plots, ncols=1, sharex=True, figsize=(2 * n_plots, 8)
-    )
+    # # Plot Features.
+    # has_mask = int(mask_on is not None)
+    # n_plots = 3 if has_mask else 2
+    # fig, axes = plt.subplots(
+    #     nrows=n_plots, ncols=1, sharex=True, figsize=(2 * n_plots, 8)
+    # )
 
-    if has_mask:
-        ax = axes[0]
-        ax.plot(np.ones_like(mask_on[:TRIM]) * threshold, "k:")
-        ax.plot(note_on_value[:TRIM])
-        ax.plot(mask_on[:TRIM])
-        ax.set_ylabel("Note-on Mask")
-        ax.set_xlabel("Time step [frame]")
-        ax.legend(["Threshold", "Likelihood", "Mask"])
+    # if has_mask:
+    #     ax = axes[0]
+    #     ax.plot(np.ones_like(mask_on[:TRIM]) * threshold, "k:")
+    #     ax.plot(note_on_value[:TRIM])
+    #     ax.plot(mask_on[:TRIM])
+    #     ax.set_ylabel("Note-on Mask")
+    #     ax.set_xlabel("Time step [frame]")
+    #     ax.legend(["Threshold", "Likelihood", "Mask"])
 
-    ax = axes[0 + has_mask]
-    ax.plot(audio_features["loudness_db"][:TRIM])
-    ax.plot(audio_features_mod["loudness_db"][:TRIM])
-    ax.set_ylabel("loudness_db")
-    ax.legend(["Original", "Adjusted"])
+    # ax = axes[0 + has_mask]
+    # ax.plot(audio_features["loudness_db"][:TRIM])
+    # ax.plot(audio_features_mod["loudness_db"][:TRIM])
+    # ax.set_ylabel("loudness_db")
+    # ax.legend(["Original", "Adjusted"])
 
-    ax = axes[1 + has_mask]
-    ax.plot(librosa.hz_to_midi(audio_features["f0_hz"][:TRIM]))
-    ax.plot(librosa.hz_to_midi(audio_features_mod["f0_hz"][:TRIM]))
-    ax.set_ylabel("f0 [midi]")
-    _ = ax.legend(["Original", "Adjusted"])
+    # ax = axes[1 + has_mask]
+    # ax.plot(librosa.hz_to_midi(audio_features["f0_hz"][:TRIM]))
+    # ax.plot(librosa.hz_to_midi(audio_features_mod["f0_hz"][:TRIM]))
+    # ax.set_ylabel("f0 [midi]")
+    # _ = ax.legend(["Original", "Adjusted"])
 
-    fig.savefig("features_processed.png")
+    # fig.savefig(os.path.join(workspace, "features_processed.png"))
 
     # Resynthesize Audio
     af = audio_features if audio_features_mod is None else audio_features_mod
@@ -324,18 +334,22 @@ def timbre_transfer(in_file, model):
     audio_gen = model.get_audio_from_outputs(outputs)
     print("Prediction took %.1f seconds" % (time.time() - start_time))
 
-    specplot(audio_gen)
-    _ = plt.title("Resynthesis")
-    plt.savefig("generated_spectrum.png")
+    # specplot(audio_gen)
+    # _ = plt.title("Resynthesis")
+    # plt.savefig(os.path.join(workspace, "generated_spectrum.png"))
 
     audio_gen = audio_gen.numpy()[0]
 
-    write(f"generated_{in_file}", DEFAULT_SAMPLE_RATE, audio_gen)
+    res = f"generated_{in_file}"
+
+    write(os.path.join(workspace, res), DEFAULT_SAMPLE_RATE, audio_gen)
+
+    return res
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == []:
-        timbre_transfer("sample.wav", "Violin")
+        timbre_transfer("test.wav", "Violin")
     else:
         timbre_transfer(args[0], args[1])

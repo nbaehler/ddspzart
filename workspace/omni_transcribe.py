@@ -1,17 +1,22 @@
 import glob
 import os
-import re
+from pathlib import Path
 import sys
 from omnizart.cli import silence_tensorflow
 from omnizart.constants.midi import SOUNDFONT_PATH
 from omnizart.remote import download_large_file_from_google_drive
-from omnizart.utils import ensure_path_exists, synth_midi
+
+from omni_utils import ensure_path_exists, synth_midi
 
 # from omnizart.music.app import MusicTranscription
 from omni_music_app import MusicTranscription
 
 
-def transcribe(input_audio, model_path="../omnizart/omnizart/checkpoints/music/music_note_stream/", output="./"):
+def transcribe(
+    input_audio,
+    model_path="../omnizart/omnizart/checkpoints/music/music_note_stream/",
+    output="./",
+):
     """Transcribe a single audio and output as a MIDI file.
 
     This will output a MIDI file with the same name as the given audio, except the
@@ -21,17 +26,17 @@ def transcribe(input_audio, model_path="../omnizart/omnizart/checkpoints/music/m
 
     \b
     Example Usage
-    $ omnizart music transcribe \ 
-        # example.wav \ 
-        --model-path path/to/model \ 
+    $ omnizart music transcribe \
+        # example.wav \
+        --model-path path/to/model \
         --output example.mid
     """
     silence_tensorflow()
     app = MusicTranscription()
 
     return app.transcribe(input_audio, model_path, output=output)
-    
-    
+
+
 def synth(input_midi, output_path="./", sf2_path=None):
     """Synthesize the MIDI into wav file.
 
@@ -59,7 +64,7 @@ def synth(input_midi, output_path="./", sf2_path=None):
                 url="16RM-dWKcNtjpBoo7DFSONpplPEg5ruvO",
                 file_length=31277462,
                 save_path=os.path.dirname(SOUNDFONT_PATH),
-                save_name=os.path.basename(SOUNDFONT_PATH)
+                save_name=os.path.basename(SOUNDFONT_PATH),
             )
         sf2_path = SOUNDFONT_PATH
 
@@ -69,16 +74,12 @@ def synth(input_midi, output_path="./", sf2_path=None):
 
 
 if __name__ == "__main__":
-    filename = "1788"
-
     args = sys.argv[1:]
     if args == []:
-        midi = transcribe(f"./{filename}.wav")
+        filename = "test.wav"
+        midis = transcribe(filename)
     else:
-        midi = transcribe(args[0], args[1],  args[2])
+        midis = transcribe(args[0], args[1], args[2])
 
-
-    filenames = glob.glob(f'./{filename}_*.mid')
-
-    for filename in filenames:
-        synth(f"./{filename}")
+    for midi in midis:
+        synth(midi)
