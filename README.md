@@ -2,7 +2,7 @@
 
 ## Multi-Instrument Timbre Transfer using Deep Learning
 
-### Group: Olaf Dünkel, Kaan Okumuş and Nicolas Bähler
+### Group: Nicolas Bähler, Olaf Dünkel, Kaan Okumuş
 
 ## Introduction
 
