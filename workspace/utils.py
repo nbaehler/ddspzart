@@ -7,18 +7,18 @@ def combine_wavs(wav_paths, out_path):
     """
     Combine multiple wav files into one.
     """
-    # wavs_data = [wave.read(path)[1] for path in wav_paths]
-    # max_len = max(data.size for data in wavs_data)
-    # wavs_data = [np.pad(data, (0, max_len - data.size), 'constant') for data in wavs_data]
-    # wav = sum(wavs_data).astype(np.int16)
-    # wave.write(out_path, 16000, wav) #TODO remove
+
+    if not wav_paths:
+        raise ValueError("List of wav files is empty")
 
     wavs = [AudioSegment.from_wav(path) for path in wav_paths]
-    result = AudioSegment.empty()
+    result = wavs[0]
 
-    for wav in wavs:
+    for wav in wavs[1:]:
         result = result.overlay(wav)
+
     AudioSegment.export(result, out_path, format="wav")
+
 
 def convert_wav(wav_path, out_path):
     """

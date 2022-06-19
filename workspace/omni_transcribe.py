@@ -81,6 +81,5 @@ if __name__ == "__main__":
     else:
         midis = transcribe(args[0], args[1], args[2])
 
-    midis = glob.glob(f"{filename}_*.mid")
     for midi in midis:
         synth(midi)
