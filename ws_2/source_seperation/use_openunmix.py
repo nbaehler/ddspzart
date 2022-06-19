@@ -14,7 +14,11 @@ import pickle
 import tqdm
 import musdb
 
-DATASET_FOLDER = "/media/olaf/OlafSSD/03_Dokumente/01_epfl/01_cm/slakh2100_flac_redux"
+#DATASET_FOLDER = "/media/olaf/OlafSSD/03_Dokumente/01_epfl/01_cm/slakh2100_flac_redux"
+#DATASET_FOLDER = "/home/duenkel/datasets/slakh2100_flac_redux_flute"
+DATASET_FOLDER = "/home/duenkel/datasets/slakh2100_flac_redux_trumpet" 
+#slakh2100_flac_redux_guitar_jazz
+#slakh2100_flac_redux_trumpet
 
 def get_sequence_from_start_and_duration(x: np.ndarray, seq_duration: float, start_time: float, sr: float) -> np.ndarray:
     start_idx = int(start_time * sr)
@@ -150,12 +154,13 @@ class SlakhDataset(torch.utils.data.Dataset):
         """
         self.target = target
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
-        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:15]
+        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))
         self.all_tracks = []
         # for id_str in tqdm.notebook.tqdm(track_folders):
         # for id_str in tqdm.tqdm(track_folders):
             # self.all_tracks.append(Track(int(id_str[-5:]), split=split, seq_duration=seq_duration))
         self.all_tracks = [Track(int(id_str[-5:]), split=split, seq_duration=seq_duration) for id_str in track_folders]
+        print("Number of all tracks:", len(self.all_tracks))
         self.filter_target()
 
     def filter_target(self):
@@ -164,6 +169,7 @@ class SlakhDataset(torch.utils.data.Dataset):
         for tr,track in enumerate(self.all_tracks):
             cnt = 0
             for ta, target in enumerate(track.targets):
+                #print(target.instrument)
                 if target.instrument == self.target:
                     if cnt >= 0: # not used currently
                         des_targets.append(target)
