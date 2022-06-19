@@ -82,7 +82,7 @@ class Track():
     def init_targets(self):
         stem_ids = [int(stem[-7:-5]) for stem in os.listdir(f"{self.track_folder}/stems")]
         # tic = time.perf_counter()
-        if os.path.exists(self.save_targets_file):
+        if os.path.exists(self.save_targets_file) and self.split == "train":
             with open(self.save_targets_file, 'rb') as targets_file:
                 self.targets = pickle.load(targets_file)
             # logging.info("Loaded targets from pickle file.")
@@ -104,7 +104,7 @@ class Track():
         # print("get mix", toc-tic)
         start_time = random.uniform(0, self.duration - self.seq_duration)
         self.start_time = start_time
-        #self.start_time = 10 #FIXME REmove
+        #self.start_time = 50 #FIXME REmove
         return get_sequence_from_start_and_duration(x,self.seq_duration,self.start_time,sr)
 
     def get_nb_audio_samples(self):
@@ -131,6 +131,7 @@ class Track():
         mix_audio = self.get_mixed_audio()
         # toc = time.perf_counter()
         stem_audio = target.get_audio_seq(self.start_time)
+
         if len(stem_audio) is 0 or (len(stem_audio) != self.seq_duration * self.sample_rate):
             logging.info("Set stem_audio to zero.")
             stem_audio = np.zeros_like(mix_audio)
@@ -150,7 +151,7 @@ class SlakhDataset(torch.utils.data.Dataset):
         """
         self.target = target
         self.dataset = mirdata.initialize('slakh',DATASET_FOLDER)
-        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:15]
+        track_folders = sorted(os.listdir(f"{DATASET_FOLDER}/{split}"))[:10]
         self.all_tracks = []
         # for id_str in tqdm.notebook.tqdm(track_folders):
         # for id_str in tqdm.tqdm(track_folders):

@@ -23,12 +23,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def main():
 
-
+    TARGET = "Trumpet"
     print("Get datasets")
-    train_dataset = SlakhDataset(target="Trumpet", seq_duration=5.0)
+    train_dataset = SlakhDataset(target=TARGET, seq_duration=5.0)
     train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
 
-    validation_dataset = SlakhDataset(target="Trumpet",split='validation',seq_duration=5.0)
+    validation_dataset = SlakhDataset(target=TARGET,split='validation',seq_duration=5.0)
     validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True)
 
     stft = openunmix.transforms.TorchSTFT() # -> shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
@@ -56,7 +56,7 @@ def main():
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
-    device = "cpu" #FIXME Remove
+    #device = "cpu" #FIXME Remove
 
     print("Build model")
     unmix = openunmix.model.OpenUnmix(
@@ -98,7 +98,7 @@ def main():
 
     keep_epoch = epoch
 
-    NUM_EPOCH = 10
+    NUM_EPOCH = 150
 
     tic = time.perf_counter()
     tic2 = time.process_time()
@@ -143,7 +143,7 @@ def main():
     writer.close()
 
 
-    PATH = f"../source_seperation/data/checkpoints/test.pt"
+    PATH = f"../source_seperation/data/checkpoints/exp07_flute.pt"
     torch.save({
             'epoch': epoch,
             'model_state_dict': unmix.state_dict(),
