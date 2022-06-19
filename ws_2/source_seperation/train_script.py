@@ -18,7 +18,7 @@ import torch.nn as nn
 
 import torch.optim as optim
 
-from use_openunmix import SlakhDataset
+from dataloader_slakh import SlakhDataset
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def main():
