@@ -23,15 +23,9 @@ workspace/.cookie
 workspace/google-cloud-sdk
 workspace/google-cloud-cli-386.0.0-linux-x86_64.tar.gz
 
-workspace/*.mid
-!workspace/sample.mid
-
-workspace/*.csv
-
-workspace/*.wav
-!workspace/test.wav
-!workspace/sample.wav
-
-workspace/*.png
+workspace/data/*
+!workspace/data/test.wav
+!workspace/data/sample.wav
+!workspace/data/1788_example*
 
 newrelic_agent.log

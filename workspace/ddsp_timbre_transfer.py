@@ -340,16 +340,16 @@ def timbre_transfer(in_file, model):
 
     audio_gen = audio_gen.numpy()[0]
 
-    res = f"generated_{in_file}"
+    out_path = in_file.replace(".wav","_generated.wav")
 
-    write(os.path.join(workspace, res), DEFAULT_SAMPLE_RATE, audio_gen)
+    write(os.path.join(workspace, out_path), DEFAULT_SAMPLE_RATE, audio_gen)
 
-    return res
+    return out_path
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == []:
-        timbre_transfer("test.wav", "Violin")
+        timbre_transfer("data/test.wav", "Violin")
     else:
         timbre_transfer(args[0], args[1])

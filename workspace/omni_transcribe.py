@@ -15,7 +15,7 @@ from omni_music_app import MusicTranscription
 def transcribe(
     input_audio,
     model_path="../omnizart/omnizart/checkpoints/music/music_note_stream/",
-    output="./",
+    output="./data",
 ):
     """Transcribe a single audio and output as a MIDI file.
 
@@ -37,7 +37,7 @@ def transcribe(
     return app.transcribe(input_audio, model_path, output=output)
 
 
-def synth(input_midi, output_path="./", sf2_path=None):
+def synth(input_midi, output_path="./data", sf2_path=None):
     """Synthesize the MIDI into wav file.
 
     If --sf2-path is not specified, will use the default soundfont file same as used by MuseScore."
@@ -76,7 +76,7 @@ def synth(input_midi, output_path="./", sf2_path=None):
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == []:
-        filename = "test.wav"
+        filename = "data/test.wav"
         midis = transcribe(filename)
     else:
         midis = transcribe(args[0], args[1], args[2])
