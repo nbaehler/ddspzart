@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # sudo apt-get install make gcc g++ llvm-8 ffmpeg libsndfile-dev
 
@@ -32,16 +32,3 @@ pip install --upgrade ddsp
 pip install --upgrade tensorflow
 
 echo "DDSP installed successfully (maybe)!"
-
-# cd ../spleeter
-
-# pip install poetry
-# poetry install
-
-# echo "Spleeter installed successfully (maybe)!"
-
-# cd ..
-
-# pip install tf-nightly
-# pip install --upgrade tensorflow
-# pip install --upgrade keras

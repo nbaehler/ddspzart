@@ -1,9 +1,8 @@
 .venv
-.vscode
-
-.omni_venv
 .ddsp_venv
 .spleeter_venv
+
+.vscode
 
 workspace/slurm*
 
@@ -16,8 +15,15 @@ workspace/google-cloud-sdk
 workspace/google-cloud-cli-386.0.0-linux-x86_64.tar.gz
 
 workspace/*.mid
+!workspace/sample.mid
+
 workspace/*.csv
+
 workspace/*.wav
+!workspace/test.wav
+!workspace/sample.wav
+
+workspace/*.png
 
 newrelic_agent.log
 __pycache__/

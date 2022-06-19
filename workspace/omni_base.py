@@ -147,7 +147,7 @@ class BaseTranscription(metaclass=ABCMeta):
             midi.write(out_path)
             if verbose:
                 logger.info("MIDI file has been written to %s.", out_path)
-        return output
+        return out_path
 
     def _validate_and_get_settings(self, setting_instance):
         if setting_instance is not None:

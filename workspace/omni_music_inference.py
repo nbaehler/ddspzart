@@ -12,7 +12,7 @@ from omnizart.constants.midi import (
     MUSICNET_INSTRUMENT_PROGRAMS,
     MIDI_PROGRAM_NAME_MAPPING,
 )
-from omnizart.utils import get_logger
+from omni_utils import get_logger
 
 
 logger = get_logger("Music Inference")

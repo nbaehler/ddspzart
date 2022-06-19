@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 cd spleeter
 
 python3 -m venv ../.spleeter_venv

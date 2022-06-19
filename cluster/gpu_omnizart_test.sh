@@ -15,7 +15,7 @@ echo STARTING AT $(date)
 
 . ../cluster/gpu_load.sh
 
-source ../.omni_venv/bin/activate
+source ../.venv/bin/activate
 python omni_transcribe.py
 source deactivate
 

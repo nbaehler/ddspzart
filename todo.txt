@@ -1,9 +1,0 @@
-Task
-----
-
-- Metrics
-- Plug everything together
-- Evaluate the performance for the sequential version
-- Training ddsp -> on the cluster
-- Openunmix training
-- Instruments MusicNet/Slack

@@ -33,7 +33,7 @@ from omnizart.music.labels import (
     PopLabelExtraction,
 )
 from omnizart.music.losses import focal_loss, smooth_loss
-from omnizart.utils import (
+from omni_utils import (
     get_logger,
     parallel_generator,
     ensure_path_exists,
@@ -152,16 +152,14 @@ class MusicTranscription(BaseTranscription):
             ],
         )
 
-        for i, midi in enumerate(midis):
-            self._output_midi(
-                output=output, input_audio=input_audio, midi=midi, instrument=i
-            )
+        out_paths = [self._output_midi(output=output, input_audio=input_audio, midi=midi, instrument=i) for i, midi in enumerate(midis)]
+
 
         if os.environ.get("LOG_LEVEL", "") == "debug":
             dump_pickle({"pred": pred, "feature": feature}, "./debug_pred.pickle")
 
         logger.info("Transcription finished")
-        return midi
+        return out_paths
 
     def generate_feature(self, dataset_path, music_settings=None, num_threads=4):
         """Extract the feature from the given dataset.

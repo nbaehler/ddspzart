@@ -5,7 +5,8 @@ import sys
 from omnizart.cli import silence_tensorflow
 from omnizart.constants.midi import SOUNDFONT_PATH
 from omnizart.remote import download_large_file_from_google_drive
-from omnizart.utils import ensure_path_exists, synth_midi
+
+from omni_utils import ensure_path_exists, synth_midi
 
 # from omnizart.music.app import MusicTranscription
 from omni_music_app import MusicTranscription
@@ -75,13 +76,11 @@ def synth(input_midi, output_path="./", sf2_path=None):
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == []:
-        filename = "1788"
-        midi = transcribe(f"./{filename}.wav")
+        filename = "test.wav"
+        midis = transcribe(filename)
     else:
-        filename = Path(args[0]).stem
-        midi = transcribe(args[0], args[1], args[2])
+        midis = transcribe(args[0], args[1], args[2])
 
-    filenames = glob.glob(f"./{filename}_*.mid")
-
-    for filename in filenames:
-        synth(f"./{filename}")
+    midis = glob.glob(f"{filename}_*.mid")
+    for midi in midis:
+        synth(midi)
