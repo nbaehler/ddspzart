@@ -2,16 +2,19 @@
 .ddsp_venv
 .spleeter_venv
 .idea
+.ipynb_checkpoints
+.vscode
+
 */.openunmix*
 */.source_sep_venv*
 *__pycache__*
 google-cloud-sdk/
 google-cloud-cli*
 
+newrelic_agent.log
+
 datasets/
 *.pickle
-
-.vscode
 
 workspace/slurm*
 
@@ -27,5 +30,3 @@ workspace/data/*
 !workspace/data/test.wav
 !workspace/data/sample.wav
 !workspace/data/1788_example*
-
-newrelic_agent.log
