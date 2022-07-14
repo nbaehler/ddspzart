@@ -19,7 +19,7 @@
 import pickle
 
 import ddsp
-# import ddsp.training
+import ddsp.training
 
 # from google.colab import files
 # from google.colab import output

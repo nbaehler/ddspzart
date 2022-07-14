@@ -1,4 +1,5 @@
 import openunmix
+from tensorboard import notebook
 import torch.optim as optim
 import torch.nn as nn
 import torch.utils.data
@@ -7,8 +8,7 @@ import torch.utils
 import os
 import scipy.signal
 import numpy as np
-from tqdm import tnrange, tqdm_notebook
-import tqdm
+from tqdm.notebook import tqdm
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import warnings
@@ -18,8 +18,8 @@ import norbert
 import musdb
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+# os.chdir("../open-unmix-pytorch")
 
-os.chdir("../open-unmix-pytorch")
 
 
 class SimpleMUSDBDataset(torch.utils.data.Dataset):
@@ -91,7 +91,7 @@ def main():
 
     scaler = sklearn.preprocessing.StandardScaler()
 
-    for x, y in tqdm.tqdm_notebook(train_dataset):
+    for x, y in tqdm(train_dataset):
         X = transform(x[None]).T
         scaler.partial_fit(X.squeeze().numpy())
 
@@ -127,8 +127,8 @@ def main():
     losses = openunmix.utils.AverageMeter()
     unmix.train()
 
-    for i in tqdm.tqdm_notebook(range(1)):
-        for x, y in tqdm.tqdm_notebook(train_sampler):
+    for i in tqdm(range(1)):
+        for x, y in tqdm(train_sampler):
             x, y = x.to(device), y.to(device)
             X = transform(x)
             Y = transform(y)
@@ -151,7 +151,7 @@ def main():
     Y_hat = unmix(X)
 
     audio_hat = istft(
-        Y[..., j].T,
+        Y[..., j].T, #TODO does not work on my machine
         n_fft=unmix.stft.n_fft,
         n_hopsize=unmix.stft.n_hop
     )
