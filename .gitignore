@@ -29,5 +29,3 @@ workspace/data/*
 workspace_2/source_separation/lightning_logs
 workspace_2/source_separation/runs
 program.prof
-
-*.flac
