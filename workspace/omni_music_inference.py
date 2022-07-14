@@ -48,7 +48,7 @@ def roll_down_sample(data, base=88):
     scale = round(total_roll / base)
     return_v = np.zeros((len(data), base))
     for i in range(0, data.shape[1], scale):
-        total = np.sum(data[:, i : i + scale], axis=1)
+        total = np.sum(data[:, i: i + scale], axis=1)
         return_v[:, int(i / scale)] = total / scale
 
     return return_v
@@ -89,13 +89,14 @@ def infer_pitch(pitch, shortest=10, offset_interval=6):
         for i in range(len(peaks) - 1)
     ]
 
-    notes.append({"start": peaks[-1], "end": len(w_on), "stren": pitch[peaks[-1], 2]})
+    notes.append(
+        {"start": peaks[-1], "end": len(w_on), "stren": pitch[peaks[-1], 2]})
 
     del_idx = []
     for idx, peak in enumerate(peaks):
         upper = int(peaks[idx + 1]) if idx < len(peaks) - 1 else len(w_dura)
         for i in range(peak, upper):
-            if np.sum(w_dura[i : i + offset_interval]) == 0:
+            if np.sum(w_dura[i: i + offset_interval]) == 0:
                 if i - notes[idx]["start"] < shortest - 1:
                     del_idx.append(idx)
                 else:
@@ -205,7 +206,8 @@ def to_midi(notes, t_unit=0.02):
     l_bound, u_bound = find_min_max_stren(notes)
     s_low = 110
     s_up = 127
-    v_map = lambda stren: int(
+
+    def v_map(stren): return int(
         s_low
         + (
             (s_up - s_low) * ((u_bound - stren) / (u_bound - l_bound + 0.0001))
@@ -218,7 +220,8 @@ def to_midi(notes, t_unit=0.02):
         start = note["start"] * t_unit
         end = note["end"] * t_unit
         volume = v_map(note["stren"])
-        m_note = pretty_midi.Note(velocity=volume, pitch=pitch, start=start, end=end)
+        m_note = pretty_midi.Note(
+            velocity=volume, pitch=pitch, start=start, end=end)
         piano.notes.append(m_note)
     midi.instruments.append(piano)
     return midi
@@ -458,7 +461,8 @@ def multi_inst_note_inference(
         ch_per_inst = 1
     else:
         raise ValueError(f"Unsupported mode: {mode}")
-    assert (pred.shape[-1] - 1) % ch_per_inst == 0, f"Input shape: {pred.shape}"
+    assert (pred.shape[-1] -
+            1) % ch_per_inst == 0, f"Input shape: {pred.shape}"
 
     ch_container = []
     iters = (pred.shape[-1] - 1) // ch_per_inst

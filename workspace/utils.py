@@ -24,7 +24,8 @@ def convert_wav(wav_path, out_path):
     """
     Change the encoding of a wav file to 16-bit.
     """
-    rate, data = wave.read(wav_path) # The data is normalized hence in the range [-1, 1]
+    rate, data = wave.read(
+        wav_path)  # The data is normalized hence in the range [-1, 1]
     data = data + 1
     data /= 2
     data *= 2 ** 16 - 1

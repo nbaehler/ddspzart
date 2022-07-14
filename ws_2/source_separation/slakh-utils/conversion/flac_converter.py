@@ -28,7 +28,8 @@ def _wav_to_flac(input_path, output_dir, verbose=False):
     """
     basename = os.path.splitext(os.path.basename(input_path))[0]
     output_path = os.path.join(output_dir, basename + '.flac')
-    ffmpeg.input(input_path).output(output_path).run_async(overwrite_output=not verbose)
+    ffmpeg.input(input_path).output(output_path).run_async(
+        overwrite_output=not verbose)
 
 
 def _flac_to_wav(input_path, output_dir, verbose=False):
@@ -42,7 +43,8 @@ def _flac_to_wav(input_path, output_dir, verbose=False):
     """
     basename = os.path.splitext(os.path.basename(input_path))[0]
     output_path = os.path.join(output_dir, basename + '.wav')
-    ffmpeg.input(input_path).output(output_path).run_async(overwrite_output=not verbose)
+    ffmpeg.input(input_path).output(output_path).run_async(
+        overwrite_output=not verbose)
 
 
 def _make_track_subset(input_dir, start=None, end=None):
@@ -152,7 +154,8 @@ def _read_flac_to_numpy2(filename, aformat='s16be', sr=44100):
     Use command `ffmpeg -formats | grep PCM` to determine what PCM audio
     formats are available on your machine.
     """
-    raise NotImplementedError('This doesn\'t work! Use `read_flac_to_numpy()` instead.')
+    raise NotImplementedError(
+        'This doesn\'t work! Use `read_flac_to_numpy()` instead.')
     codec = 'pcm_' + aformat
     out, err = ffmpeg.input(filename).output('pipe:',
                                              format=aformat,
@@ -175,7 +178,8 @@ def read_flac_to_numpy(filename):
         thread_id = threading.current_thread().ident
 
     # this file temp_name is unique AF
-    temp_name = '{}_{}_{}.wav'.format(str(uuid.uuid4()), os.getpid(), thread_id)
+    temp_name = '{}_{}_{}.wav'.format(
+        str(uuid.uuid4()), os.getpid(), thread_id)
     ffmpeg.input(filename).output(temp_name).run()
     wav, sr = sf.read(temp_name)
     os.remove(temp_name)
@@ -189,7 +193,7 @@ if __name__ == '__main__':
                         help='Base path to input directory. (Required)')
     parser.add_argument('--output-dir', '-o', type=str, required=True,
                         help='Base path to output directory. (Required)')
-    parser.add_argument('--compress', '-c', type=lambda x:bool(strtobool(x)), required=True,
+    parser.add_argument('--compress', '-c', type=lambda x: bool(strtobool(x)), required=True,
                         help='If true, will convert from .wav to .flac, else'
                              'will convert from .flac to .wav. (Required)')
     parser.add_argument('--start', '-s', type=int, default=None, required=False,
@@ -198,7 +202,7 @@ if __name__ == '__main__':
                         help='If converting a subset, the highest Track ID. (Optional)')
     parser.add_argument('--num-threads', '-t', type=int, default=1, required=False,
                         help='Number of threads to spawn to convert. (Optional)')
-    parser.add_argument('--verbose', '-v', type=lambda x:bool(strtobool(x)), default=False,
+    parser.add_argument('--verbose', '-v', type=lambda x: bool(strtobool(x)), default=False,
                         required=False,
                         help='Whether to print messages while processing. (Optional)')
 

@@ -1,38 +1,44 @@
 
 
 #import scipy.signal
-print('Start')
-import numpy as np
-import tqdm
-import matplotlib.pyplot as plt
-import warnings
-import random
-import sklearn.preprocessing
-import norbert
-import musdb
-import torch
-import os
-import pickle 
-import openunmix
-import torch.nn as nn
-
-import torch.optim as optim
-
+import pickle
 from dataloader_slakh import SlakhDataset
+import torch.optim as optim
+import torch.nn as nn
+import openunmix
+import os
+import torch
+import musdb
+import norbert
+import sklearn.preprocessing
+import random
+import warnings
+import matplotlib.pyplot as plt
+import tqdm
+import numpy as np
+print('Start')
+
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 def main():
 
     TARGET = "Trumpet"
     print("Get datasets")
     train_dataset = SlakhDataset(target=TARGET, seq_duration=5.0)
-    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
+    train_sampler = torch.utils.data.DataLoader(
+        train_dataset, batch_size=8, shuffle=True)
 
-    validation_dataset = SlakhDataset(target=TARGET,split='validation',seq_duration=5.0)
-    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True)
+    validation_dataset = SlakhDataset(
+        target=TARGET, split='validation', seq_duration=5.0)
+    validation_sampler = torch.utils.data.DataLoader(
+        validation_dataset, batch_size=8, shuffle=True)
 
-    stft = openunmix.transforms.TorchSTFT() # -> shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
-    spec = openunmix.transforms.ComplexNorm(mono=True) # -> shape (nb_samples, nb_channels(=1 if mono), nb_bins, nb_frames)
+    # -> shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
+    stft = openunmix.transforms.TorchSTFT()
+    # -> shape (nb_samples, nb_channels(=1 if mono), nb_bins, nb_frames)
+    spec = openunmix.transforms.ComplexNorm(mono=True)
     transform = nn.Sequential(stft, spec)
 
     print("Get scaling")
@@ -56,7 +62,7 @@ def main():
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
-    #device = "cpu" #FIXME Remove
+    # device = "cpu" #FIXME Remove
 
     print("Build model")
     unmix = openunmix.model.OpenUnmix(
@@ -72,18 +78,21 @@ def main():
     criterion = torch.nn.MSELoss()
 
     VALID_EVERY_N_EPOCH = 5
-    
+
     from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir="../source_separation/runs/exp4_trumpet_with_valid_2")
-    epoch=0
+    writer = SummaryWriter(
+        log_dir="../source_separation/runs/exp4_trumpet_with_valid_2")
+    epoch = 0
 
     from torch.optim.lr_scheduler import StepLR
     scheduler = StepLR(optimizer, step_size=30, gamma=0.8)
 
     import time
-    train_sampler = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=4)
-    validation_sampler = torch.utils.data.DataLoader(validation_dataset, batch_size=8, shuffle=True, num_workers=4)
-    stft = openunmix.transforms.TorchSTFT() 
+    train_sampler = torch.utils.data.DataLoader(
+        train_dataset, batch_size=8, shuffle=True, num_workers=4)
+    validation_sampler = torch.utils.data.DataLoader(
+        validation_dataset, batch_size=8, shuffle=True, num_workers=4)
+    stft = openunmix.transforms.TorchSTFT()
     spec = openunmix.transforms.ComplexNorm(mono=True)
     transform = nn.Sequential(stft, spec).to(device)
 
@@ -92,7 +101,7 @@ def main():
     losses = openunmix.utils.AverageMeter()
     losses_valid = openunmix.utils.AverageMeter()
     unmix.train()
-    stft = openunmix.transforms.TorchSTFT() 
+    stft = openunmix.transforms.TorchSTFT()
     spec = openunmix.transforms.ComplexNorm(mono=True)
     transform = nn.Sequential(stft, spec).to(device)
 
@@ -102,9 +111,9 @@ def main():
 
     tic = time.perf_counter()
     tic2 = time.process_time()
-    for epoch in range(keep_epoch,NUM_EPOCH+keep_epoch):
+    for epoch in range(keep_epoch, NUM_EPOCH+keep_epoch):
         print("Epoch: ", epoch)
-        for x, y in train_sampler: #tqdm.notebook.tqdm(train_sampler): 
+        for x, y in train_sampler:  # tqdm.notebook.tqdm(train_sampler):
             x, y = x.to(device), y.to(device)
             X = transform(x)
             Y = transform(y)
@@ -128,7 +137,7 @@ def main():
             unmix.eval()
             with torch.no_grad():
                 val_loss = []
-                for x,y in validation_sampler:
+                for x, y in validation_sampler:
                     x, y = x.to(device), y.to(device)
                     X = transform(x)
                     Y = transform(y)
@@ -137,26 +146,26 @@ def main():
                     losses_valid.update(loss_valid.item(), Y.size(1))
                 writer.add_scalar("Loss/validation", losses_valid.avg, epoch)
                 print(f"validation: {losses_valid.avg:.3f}")
-            unmix.train()           
+            unmix.train()
 
     writer.flush()
     writer.close()
 
-
     PATH = f"../source_separation/data/checkpoints/exp07_flute.pt"
     torch.save({
-            'epoch': epoch,
-            'model_state_dict': unmix.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'loss': loss,
-            }, PATH)
+        'epoch': epoch,
+        'model_state_dict': unmix.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss,
+    }, PATH)
 
     print("Saved model")
 
     print("testing...")
     # Testing
-    test_dataset = SlakhDataset(split='test',seq_duration=5.0)
-    test_sampler = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=True)
+    test_dataset = SlakhDataset(split='test', seq_duration=5.0)
+    test_sampler = torch.utils.data.DataLoader(
+        test_dataset, batch_size=8, shuffle=True)
 
     for epoch in range(4):
         for x, y in test_sampler:

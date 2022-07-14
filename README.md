@@ -68,7 +68,10 @@ Open-Unmix in our project.
 It is out of scope for this project to perform a thorough network analysis, thorough training of the network, hyperparameter tuning, documentation, and evaluation of those.
 However, our goal was to get the framework working (on our computer and on the IZAR cluster as well to allow faster training). We provide a notebook for easier training on the laptop and a training script for usage on the cluster.
 We do not obtain perfect results but we see where show where are the restrictions and boundaries of the model and where more efforts could lead to better results. For further work, we provide functionality for evaluation as well.
-We provide a rough demonstration in the notebook ws_2/source_separation/1_source_separation_trumpet. We do not provide a detailed explanation of the training scripts. For training, we used train_script.py, train_clean_pipeline.ipynb and train_openunmix.ipynb.
+We provide a rough demonstration in the notebook
+`ws_2/source_separation/1_source_separation_trumpet.ipynb`. We do not provide a
+detailed explanation of the training scripts. For training, we used
+`train_script.py`, `train_clean_pipeline.ipynb` and `train_openunmix.ipynb`.
 
 #### Omnizart
 
@@ -182,10 +185,6 @@ as `1788.wav` on our Google Drive.
 
 All those (intermediate) results can be played in the Jupyter notebook
 `workspace/ddspzart_example_run_results.ipynb`.
-
-### Open-Unmix source separation
-
-<!-- TODO -->
 
 ## Conclusion
 

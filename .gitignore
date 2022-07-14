@@ -13,9 +13,6 @@ google-cloud-cli*
 
 newrelic_agent.log
 
-# datasets/
-# *.pickle
-
 workspace/slurm*
 
 workspace/ddsp_pretrained

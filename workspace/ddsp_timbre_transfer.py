@@ -14,16 +14,15 @@
 # ==============================================================================
 
 # Ignore a bunch of deprecation warnings
-import sys
-import warnings
-
-warnings.filterwarnings("ignore")
-
-import os
-import time
-
-import ddsp
-import ddsp.training
+from tensorflow.python.ops.numpy_ops import np_config
+from scipy.io.wavfile import write
+import tensorflow.compat.v2 as tf
+import pickle
+import numpy as np
+import matplotlib.pyplot as plt
+import librosa
+import gin
+from ddsp.training.postprocessing import detect_notes, fit_quantile_transform
 from ddsp_colab_utils import (
     auto_tune,
     get_tuning_factor,
@@ -31,23 +30,20 @@ from ddsp_colab_utils import (
     DEFAULT_SAMPLE_RATE,
     audio_bytes_to_np,
 )
+import ddsp.training
+import ddsp
+import time
+import os
+import sys
+import warnings
 
+warnings.filterwarnings("ignore")
 
-from ddsp.training.postprocessing import detect_notes, fit_quantile_transform
-import gin
-import librosa
-import matplotlib.pyplot as plt
-import numpy as np
-import pickle
-import tensorflow.compat.v2 as tf
 
 # gpus = tf.config.list_physical_devices(device_type = 'GPU')
 # tf.config.experimental.set_memory_growth(gpus[0], True)
 # tf.config.set_visible_devices([], 'GPU')
 
-from scipy.io.wavfile import write
-
-from tensorflow.python.ops.numpy_ops import np_config
 
 np_config.enable_numpy_behavior()
 
@@ -83,7 +79,8 @@ def timbre_transfer(in_file, model):
     # Compute features.
     start_time = time.time()
     audio_features = ddsp.training.metrics.compute_audio_features(audio)
-    audio_features["loudness_db"] = audio_features["loudness_db"].astype(np.float32)
+    audio_features["loudness_db"] = audio_features["loudness_db"].astype(
+        np.float32)
     audio_features_mod = None
     print("Audio features took %.1f seconds" % (time.time() - start_time))
 
@@ -276,11 +273,13 @@ def timbre_transfer(in_file, model):
 
             # Auto-tune.
             if autotune:
-                f0_midi = np.array(ddsp.core.hz_to_midi(audio_features_mod["f0_hz"]))
+                f0_midi = np.array(ddsp.core.hz_to_midi(
+                    audio_features_mod["f0_hz"]))
                 tuning_factor = get_tuning_factor(
                     f0_midi, audio_features_mod["f0_confidence"], mask_on
                 )
-                f0_midi_at = auto_tune(f0_midi, tuning_factor, mask_on, amount=autotune)
+                f0_midi_at = auto_tune(
+                    f0_midi, tuning_factor, mask_on, amount=autotune)
                 audio_features_mod["f0_hz"] = ddsp.core.midi_to_hz(f0_midi_at)
 
         else:
@@ -340,7 +339,7 @@ def timbre_transfer(in_file, model):
 
     audio_gen = audio_gen.numpy()[0]
 
-    out_path = in_file.replace(".wav","_generated.wav")
+    out_path = in_file.replace(".wav", "_generated.wav")
 
     write(os.path.join(workspace, out_path), DEFAULT_SAMPLE_RATE, audio_gen)
 

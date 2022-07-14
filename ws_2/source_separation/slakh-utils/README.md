@@ -3,26 +3,30 @@
 Utilities for common tasks with the Slakh dataset.
 
 ## About Slakh
-The Synthesized Lakh (Slakh) Dataset is a new dataset for audio source separation that is synthesized from the [Lakh MIDI Dataset v0.1](https://colinraffel.com/projects/lmd/) using professional-grade sample-based virtual instruments.  **Slakh2100** contains 2100 automatically mixed tracks and accompanying MIDI files synthesized using a professional-grade sampling engine. The tracks in **Slakh2100** are split into training (1500 tracks), validation (375 tracks), and test (225 tracks) subsets, totaling **145 hours** of mixtures.
+
+The Synthesized Lakh (Slakh) Dataset is a new dataset for audio source separation that is synthesized from the [Lakh MIDI Dataset v0.1](https://colinraffel.com/projects/lmd/) using professional-grade sample-based virtual instruments. **Slakh2100** contains 2100 automatically mixed tracks and accompanying MIDI files synthesized using a professional-grade sampling engine. The tracks in **Slakh2100** are split into training (1500 tracks), validation (375 tracks), and test (225 tracks) subsets, totaling **145 hours** of mixtures.
 
 Slakh is brought to you by [Mitsubishi Electric Research Lab (MERL)](http://www.merl.com/) and the [Interactive Audio Lab at Northwestern University](http://music.cs.northwestern.edu/). For more info, please visit [the Slakh website](http://www.slakh.com/)
 
-
 ## Table of Contents
 
-1. [At a Glance](#at-a-glance)
-2. [Metadata](#metadata)
-3. [Setting Up Utils](#setting-up-utils)
-4. [Converting to/from .flac](#converting-tofrom-flac)
-5. [Resampling](#resampling)
-6. [Make Splits](#make-splits)
-7. [Making Submixes](#making-submixes)
-8. [Mixing to Replicate Benchmark Experiments](#mixing-to-replicate-benchmark-experiments)
+- [slakh-utils](#slakh-utils)
+  - [About Slakh](#about-slakh)
+  - [Table of Contents](#table-of-contents)
+  - [At a Glance](#at-a-glance)
+  - [Metadata](#metadata)
+  - [Scripts](#scripts)
+    - [Setting up utils](#setting-up-utils)
+    - [Converting to/from `.flac`](#converting-tofrom-flac)
+    - [Resampling](#resampling)
+    - [Make Splits](#make-splits)
+    - [Making Submixes](#making-submixes)
+    - [Mixing to Replicate Benchmark Experiments](#mixing-to-replicate-benchmark-experiments)
 
 ## At a Glance
 
 - The dataset comes as a series of directories named like `TrackXXXXX`, where `XXXXX` is a number
-    between `00001` and `02100`. This number is the ID of the track.
+  between `00001` and `02100`. This number is the ID of the track.
 - The directory structure looks like this:
 
 ```
@@ -37,14 +41,15 @@ Track00001
    └─── stems
         └─── S01.flac
         │    ...
-        └─── SXX.flac 
+        └─── SXX.flac
 ```
 
 <br>&emsp;&emsp;-> `all_src.mid` is the original MIDI file from Lakh that contains all of the sources.
 <br>&emsp;&emsp;-> `metadata.yaml` contains metadata for this track (see below.)
 <br>&emsp;&emsp;-> `MIDI` contains MIDI files separated by each instrument, the file names correspond with the stems.
-<br>&emsp;&emsp;-> `mix.flac` is the mixture, made my summing up all of the audio in the `stems` directory. 
+<br>&emsp;&emsp;-> `mix.flac` is the mixture, made my summing up all of the audio in the `stems` directory.
 <br>&emsp;&emsp;-> `stems` contains isolated audio for each source in the mixture.
+
 - All audio in Slakh2100 is distributed in the `.flac` format. (Scripts to batch convert below.)
 - All audio is mono and was rendered at 44.1kHz, 16-bit (CD quality) before being converted to `.flac`.
 - Slakh2100 is distributed as a tarball (`.tar.gz`) that must be uncompressed prior to using any of these scripts.
@@ -53,7 +58,6 @@ Track00001
 - The MIDI for source XX in `all_src.mid` is not guaranteed to match `SXX.mid`, as some instrument-specific heuristics were applied to the MIDI to ensure proper synthesis. `SXX.mid` is the exact file used to synthesize `SXX.flac`, whereas entry for source XX in `all_src.mid` is a direct copy from Lakh.
 - **Some MIDI files are replicated** (due to a bug). This has can be ameliorated depending on your use case. See [Make Splits](#make-splits) below.
 
-
 ## Metadata
 
 All metadata is distributed as `yaml` files and are similar in structure to [MedleyDB](https://medleydb.weebly.com/)'s metadata files.
@@ -61,7 +65,7 @@ All metadata is distributed as `yaml` files and are similar in structure to [Med
 Here is an annotated overview of what is in the metadata files for these tracks. Annotations are in parentheses after each entry below:
 
 ```
-UUID: 1a81ae092884234f3264e2f45927f00a (File name of the original MIDI file from Lakh, sans extension) 
+UUID: 1a81ae092884234f3264e2f45927f00a (File name of the original MIDI file from Lakh, sans extension)
 audio_dir: stems (Directory name of where the stems are stored, will always be "stems")
 lmd_midi_dir: lmd_matched/O/O/H/TROOHTB128F931F9DF/1a81ae092884234f3264e2f45927f00a.mid (Path to the original MIDI file from a fresh download of Lakh)
 midi_dir: MIDI (Directory name of where the separated MIDI files are stored, will always be "MIDI")
@@ -82,9 +86,9 @@ stems:
     ...
   S02:
     ...
-    
+
   ...
-  
+
   S10:
     ...
 target_peak: -1.0 (target peak [dB] when applying gain to all stems after summing mixture, will always be "-1.0")
@@ -92,12 +96,11 @@ target_peak: -1.0 (target peak [dB] when applying gain to all stems after summin
 
 For a list of the MIDI program numbers and their organization see [these files](https://github.com/ethman/slakh-utils/tree/master/midi_inst_values).
 
-
 ## Scripts
 
 ### Setting up utils
 
-Before you can use any of the utils, you need python3 installed on your machine. It is 
+Before you can use any of the utils, you need python3 installed on your machine. It is
 recommended to use a new virtual environment or anaconda environment. Then download or clone the
 code in this repository and install the required packages like so:
 
@@ -112,7 +115,7 @@ All of the audio in Slakh2100 comes compressed as .flac files. To convert every 
 
 This script outputs a copy of the input Slakh with the .flac files converted to .wav files (or vice versa).
 It **does not** do the conversion in place! There is a toggle to determine whether you want to compress (to .flac)
-or decompress (to .wav) the audio within Slakh, and there is also an option to multithread this process. See below for 
+or decompress (to .wav) the audio within Slakh, and there is also an option to multithread this process. See below for
 all options.
 
 ```bash
@@ -151,21 +154,20 @@ arguments:
 
 ((Documentation coming soon, for now look at the script in the `resampling` directory))
 
-
 ### Make Splits
 
 The original Slakh2100 was found to have many duplicate MIDI files, some MIDI duplicates that are present
 in more than one of the train/test/validation splits.
-Even though each song is rendered with a random set of synthesizers, the same versions of the songs appear 
+Even though each song is rendered with a random set of synthesizers, the same versions of the songs appear
 more than once. Same MIDI, different audio files. Still this can be an issue for some uses of Slakh2100.
 
 To that end, we are releasing two additional ways to split Slakh2100. Here's the information about
-all of the Slakh2100 splits. *We ask that if you use Slakh2100 in a research paper, that you conform
-to this naming convention for easier reproducibility.*
+all of the Slakh2100 splits. _We ask that if you use Slakh2100 in a research paper, that you conform
+to this naming convention for easier reproducibility._
 
 **Slakh2100-orig**: This is the name for the original splits of the Slakh2100 dataset.
 
-**Slakh2100-split2**: This is the name for the new split that *still contains all 2100 tracks*. This new split
+**Slakh2100-split2**: This is the name for the new split that _still contains all 2100 tracks_. This new split
 **moves** all tracks with duplicated MIDI files such that no duplicated MIDI files are in more than one split.
 There are still 1500 train tracks, 375 validation tracks, and 225 test tracks. For this configuration, use
 `splits_v2.json` with the script below.
@@ -175,7 +177,7 @@ tracks such that each MIDI file only occurs once. As such, there are **1710 tota
 270 in validation, and 151 in test. For this configuration, use `redux.json` with the script below.
 
 All of the code and json data are in the `splits/` directory of this repository.
-We have included a json file that links tracks to their MIDI duplicates at `duplicates.json`. 
+We have included a json file that links tracks to their MIDI duplicates at `duplicates.json`.
 
 Additionally, we have included a script that will convert from `Slakh2100-orig` to `Slakh2100-split2` or `Slakh2100-redux`.
 It will also convert `Slakh2100-split2` or `Slakh2100-redux` back to `Slakh2100-orig` using the `-r` flag.
@@ -200,27 +202,27 @@ optional arguments:
 ```
 
 To convert `Slakh2100-orig` to `Slakh2100-split2`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -s split_v2.json
 ```
 
 To convert `Slakh2100-orig` to `Slakh2100-redux`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -s redux.json
 ```
 
-
 To convert `Slakh2100-split2` or `Slakh2100-redux` back to `Slakh2100-orig`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -r
 ```
 
-
-
 ### Making Submixes
 
 This is a script that makes submixes by combining sets of instruments within a mix. It is possible to define
-customizable submixes by providing a submix definition file. A few examples of submix definition files are provided 
+customizable submixes by providing a submix definition file. A few examples of submix definition files are provided
 [here](https://github.com/ethman/slakh-utils/tree/master/submixes/example_submixes).
 
 To use this script you can either provide the base path to all of Slakh to make submixes for every track,
@@ -232,7 +234,7 @@ Full usage details:
 
 ```
 $ python submixes.py [-h] -submix-definition-file SUBMIX_DEFINITION_FILE
-                   [-input-dir INPUT_DIR] [-src-dir SRC_DIR] 
+                   [-input-dir INPUT_DIR] [-src-dir SRC_DIR]
                    [-num-threads NUM_THREADS]
 
 arguments:
@@ -249,12 +251,11 @@ arguments:
 ```
 
 The submix definition files are `yaml` files that contain "recipes" about which types of isolated sources get
-mixed together into submix sources. Inside the yaml file is a dictionary that contains two elements, 
-a `Mixing Key` and the `Recipes` list. 
-
+mixed together into submix sources. Inside the yaml file is a dictionary that contains two elements,
+a `Mixing Key` and the `Recipes` list.
 
 The `Mixing key` tells the script what part of the [metadata](https://github.com/ethman/slakh-utils#metadata) to look at to define submix
-sources (that get mixed together). Options for `Mixing key` could *technically* be any entry under the
+sources (that get mixed together). Options for `Mixing key` could _technically_ be any entry under the
 source name in `metadata.yaml`, but most common `Mixing key`s are (ordered from most to least
 general) `inst_class`, `program_num` (equivalent to `midi_program_name`), and `plugin_name`.
 
@@ -263,7 +264,7 @@ sources. The key of each dictionary is the name of the source (and its name on d
 and the value is a list of possible entries that make the source. **Everything that is encountered that
 isn't defined by a recipe will be put into a file called** `residuals.wav`.
 
-Here's an example. If we want to make a submix with every piano except harpsichord and clavinet, 
+Here's an example. If we want to make a submix with every piano except harpsichord and clavinet,
 first we look at the [MIDI instrument chart](https://github.com/ethman/slakh-utils/blob/master/midi_inst_values/general_midi_inst_0based.txt):
 
 ```
@@ -300,18 +301,13 @@ Recipes:
     - 3
     - 4
     - 5
-``` 
+```
 
 Let's name this file `my_pianos.yaml`. When give this submix definition to `submixes.py` it will
 make a new folder in the `stems` directory of every track called `my_pianos/`. Inside `my_pianos/`
 will be a file called `favorite_piano_sounds.wav` containing every track that has those MIDI instrument
 values and another file called `residuals.wav` containing everything else.
 
-
-
 ### Mixing to Replicate Benchmark Experiments
 
-
-((Documentation and code coming soon.)) 
-
-
+((Documentation and code coming soon.))

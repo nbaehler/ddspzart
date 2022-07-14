@@ -17,12 +17,16 @@ from loguru import logger
 
 
 def get_args(parser):
-    parser.add_argument('--input-dir', '-i', required=True, type=str, help='Input base directory.')
+    parser.add_argument('--input-dir', '-i', required=True,
+                        type=str, help='Input base directory.')
     parser.add_argument('--output-dir', '-o', required=False, type=str,
                         help='Output base directory.')
-    parser.add_argument('--dataset', '-d', required=True, type=str, help='Dataset to resample')
-    parser.add_argument('--sample_rate', '-sr', required=True, type=int, help='Target sample rate')
-    parser.add_argument('--n-threads', '-t', required=True, type=int, help='Number of threads to run in parallel.')
+    parser.add_argument('--dataset', '-d', required=True,
+                        type=str, help='Dataset to resample')
+    parser.add_argument('--sample_rate', '-sr', required=True,
+                        type=int, help='Target sample rate')
+    parser.add_argument('--n-threads', '-t', required=True,
+                        type=int, help='Number of threads to run in parallel.')
     args = parser.parse_args()
     return args
 
@@ -124,7 +128,8 @@ def musdb_decode_and_resample(input_dir, target_sr, output_dir, n_threads):
 
         def _resamp(stempeg_filename):
             stempeg_path = os.path.join(in_dir, stempeg_filename)
-            stempeg_filename_stub = stempeg_filename.replace('.stem.mp4', '').replace(' ', '')
+            stempeg_filename_stub = stempeg_filename.replace(
+                '.stem.mp4', '').replace(' ', '')
             output_wav_dir = os.path.join(out_dir, stempeg_filename_stub)
             os.makedirs(output_wav_dir, exist_ok=True)
 

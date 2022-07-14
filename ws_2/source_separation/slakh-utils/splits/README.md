@@ -2,16 +2,16 @@
 
 The original Slakh2100 was found to have many duplicate MIDI files, some MIDI duplicates that are present
 in more than one of the train/test/validation splits.
-Even though each song is rendered with a random set of synthesizers, the same versions of the songs appear 
+Even though each song is rendered with a random set of synthesizers, the same versions of the songs appear
 more than once. Same MIDI, different audio files. Still this can be an issue for some uses of Slakh2100.
 
 To that end, we are releasing two additional ways to split Slakh2100. Here's the information about
-all of the Slakh2100 splits. *We ask that if you use Slakh2100 in a research paper, that you conform
-to this naming convention for easier reproducibility.*
+all of the Slakh2100 splits. _We ask that if you use Slakh2100 in a research paper, that you conform
+to this naming convention for easier reproducibility._
 
 **Slakh2100-orig**: This is the name for the original splits of the Slakh2100 dataset.
 
-**Slakh2100-split2**: This is the name for the new split that *still contains all 2100 tracks*. This new split
+**Slakh2100-split2**: This is the name for the new split that _still contains all 2100 tracks_. This new split
 **moves** all tracks with duplicated MIDI files such that no duplicated MIDI files are in more than one split.
 There are still 1500 train tracks, 375 validation tracks, and 225 test tracks. For this configuration, use
 `splits_v2.json` with the script below.
@@ -20,8 +20,7 @@ There are still 1500 train tracks, 375 validation tracks, and 225 test tracks. F
 tracks such that each MIDI file only occurs once. As such, there are **1710 total tracks**, 1289 in train,
 270 in validation, and 151 in test. For this configuration, use `redux.json` with the script below.
 
-We have included a json file that links tracks to their MIDI duplicates at `duplicates.json`. 
-
+We have included a json file that links tracks to their MIDI duplicates at `duplicates.json`.
 
 Additionally, we have included a script that will convert from `Slakh2100-orig` to `Slakh2100-split2` or `Slakh2100-redux`.
 It will also convert `Slakh2100-split2` or `Slakh2100-redux` back to `Slakh2100-orig` using the `-r` flag.
@@ -46,17 +45,19 @@ optional arguments:
 ```
 
 To convert `Slakh2100-orig` to `Slakh2100-split2`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -s split_v2.json
 ```
 
 To convert `Slakh2100-orig` to `Slakh2100-redux`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -s redux.json
 ```
 
-
 To convert `Slakh2100-split2` or `Slakh2100-redux` back to `Slakh2100-orig`, run:
+
 ```
 $python resplit_slakh.py -d /path/to/slakh2100/ -r
 ```

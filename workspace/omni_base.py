@@ -56,7 +56,8 @@ class BaseTranscription(metaclass=ABCMeta):
             # The given model_path is actually the 'transcription_mode'.
             default_path = self.settings.checkpoint_path[model_path]
             model_path = os.path.join(MODULE_PATH, default_path)
-            logger.info("Using built-in model %s for transcription.", model_path)
+            logger.info(
+                "Using built-in model %s for transcription.", model_path)
 
         model_path, conf_path = self._resolve_model_path(model_path)
         settings = self.setting_class(conf_path=conf_path)
@@ -74,16 +75,19 @@ class BaseTranscription(metaclass=ABCMeta):
         return model, settings
 
     def _resolve_model_path(self, model_path=None):
-        model_path = os.path.abspath(model_path) if model_path is not None else None
+        model_path = os.path.abspath(
+            model_path) if model_path is not None else None
         logger.debug("Absolute path of the given model: %s", model_path)
         if model_path is None:
             default_path = self.settings.checkpoint_path[
                 self.settings.transcription_mode
             ]
             model_path = os.path.join(MODULE_PATH, default_path)
-            logger.info("Using built-in model %s for transcription.", model_path)
+            logger.info(
+                "Using built-in model %s for transcription.", model_path)
         elif not os.path.exists(model_path):
-            raise FileNotFoundError(f"The given path doesn't exist: {model_path}.")
+            raise FileNotFoundError(
+                f"The given path doesn't exist: {model_path}.")
         elif not os.path.basename(model_path).startswith(
             self.settings.model.save_prefix.lower()
         ) and not {"arch.yaml", "weights.h5", "configurations.yaml"}.issubset(
@@ -91,7 +95,8 @@ class BaseTranscription(metaclass=ABCMeta):
         ):
 
             # Search checkpoint folders under the given path
-            dirs = [c_dir for c_dir in os.listdir(model_path) if os.path.isdir(c_dir)]
+            dirs = [c_dir for c_dir in os.listdir(
+                model_path) if os.path.isdir(c_dir)]
             prefix = self.settings.model.save_prefix.lower()
             cand_dirs = [c_dir for c_dir in dirs if c_dir.startswith(prefix)]
 
@@ -141,7 +146,8 @@ class BaseTranscription(metaclass=ABCMeta):
             if instrument is None:
                 output = jpath(output, get_filename(input_audio))
             else:
-                output = jpath(output, f"{get_filename(input_audio)}_{instrument}")
+                output = jpath(
+                    output, f"{get_filename(input_audio)}_{instrument}")
         if midi is not None:
             out_path = output if output.endswith(".mid") else f"{output}.mid"
             midi.write(out_path)
@@ -311,7 +317,8 @@ class BaseDatasetLoader:
             self.hdf_files = feature_files
 
         if len(self.hdf_files) == 0:
-            logger.warning("Warning! No feature file was found in the given path.")
+            logger.warning(
+                "Warning! No feature file was found in the given path.")
 
         self.slice_hop = slice_hop
         self.feat_col_name = feat_col_name
@@ -355,7 +362,8 @@ class BaseDatasetLoader:
         for _ in range(self.num_samples):
             if len(self.start_idxs) == 0:
                 # Shuffle the indexes after visiting all the samples in the dataset.
-                self.start_idxs = list(range(0, self.total_length, self.slice_hop))
+                self.start_idxs = list(
+                    range(0, self.total_length, self.slice_hop))
                 if self.cut_idx > 0:
                     self.start_idxs = self.start_idxs[: -self.cut_idx]
                 random.shuffle(self.start_idxs)
@@ -371,12 +379,12 @@ class BaseDatasetLoader:
 
     def _get_feature(self, hdf_name, slice_start):
         return self.hdf_refs[hdf_name][self.feat_col_name][
-            slice_start : slice_start + self.slice_hop
+            slice_start: slice_start + self.slice_hop
         ].squeeze()
 
     def _get_label(self, hdf_name, slice_start):
         return self.hdf_refs[hdf_name]["label"][
-            slice_start : slice_start + self.slice_hop
+            slice_start: slice_start + self.slice_hop
         ].squeeze()
 
     def _pre_yield(self, feature, label):

@@ -36,13 +36,15 @@ class Submixes(object):
 
         all_vals = [i for s in self.submix_recipes.values() for i in s]
         if len(set(all_vals)) != len(all_vals):
-            raise LookupError('All values in submix file must be unique! A value was used more than once.')
+            raise LookupError(
+                'All values in submix file must be unique! A value was used more than once.')
         # invert the dictionary so the keys are program numbers and the vals are the submix name.
         self._inv_sm = self._invert_dict(self.submix_recipes)
 
         self.submix_key = self.submix_data['Mixing key']
         if self.RESIDUALS_KEY in self.submix_recipes.keys():
-            raise ValueError('\'{}\' is a reserved submix name.'.format(self.RESIDUALS_KEY))
+            raise ValueError(
+                '\'{}\' is a reserved submix name.'.format(self.RESIDUALS_KEY))
 
     def _get_all_src_dirs(self):
         return sorted([root for root, dirs, files in os.walk(self.base_directory)
@@ -68,13 +70,16 @@ class Submixes(object):
         pool.map(self.do_submix, dirs)
 
     def do_submix(self, srcs_dir):
-        src_metadata = yaml.load(open(os.path.join(srcs_dir, 'metadata.yaml'), 'r'))
-        submix_dir = os.path.join(srcs_dir, _file_ready_string(self.submix_name))
+        src_metadata = yaml.load(
+            open(os.path.join(srcs_dir, 'metadata.yaml'), 'r'))
+        submix_dir = os.path.join(
+            srcs_dir, _file_ready_string(self.submix_name))
         os.makedirs(submix_dir, exist_ok=True)
 
         mix_wav, sr = sf.read(os.path.join(srcs_dir, 'mix.wav'))
 
-        submixes_dict = {_file_ready_string(k): [] for k in self.submix_recipes.keys()}
+        submixes_dict = {_file_ready_string(k): []
+                         for k in self.submix_recipes.keys()}
         submixes_dict[self.RESIDUALS_KEY] = []
 
         # Use the file's metadata and the submix recipe to gather all the
@@ -135,4 +140,5 @@ if __name__ == '__main__':
         sm.do_submix(args.src_dir)
 
     else:
-        raise ValueError('I do not now how you got in this state, but something is broken!')
+        raise ValueError(
+            'I do not now how you got in this state, but something is broken!')

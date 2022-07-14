@@ -226,22 +226,23 @@ def get_tuning_factor(f0_midi, f0_confidence, mask_on):
     """Get an offset in cents, to most consistent set of chromatic intervals."""
     # Difference from midi offset by different tuning_factors.
     tuning_factors = np.linspace(-0.5, 0.5, 101)  # 1 cent divisions.
-    midi_diffs = (f0_midi[mask_on][:, np.newaxis] - tuning_factors[np.newaxis, :]) % 1.0
+    midi_diffs = (f0_midi[mask_on][:, np.newaxis] -
+                  tuning_factors[np.newaxis, :]) % 1.0
     midi_diffs[midi_diffs > 0.5] -= 1.0
     weights = f0_confidence[mask_on][:, np.newaxis]
 
-    ## Computes mininmum adjustment distance.
+    # Computes mininmum adjustment distance.
     cost_diffs = np.abs(midi_diffs)
     cost_diffs = np.mean(weights * cost_diffs, axis=0)
 
-    ## Computes minimum "note" transitions.
+    # Computes minimum "note" transitions.
     f0_at = f0_midi[mask_on][:, np.newaxis] - midi_diffs
     f0_at_diffs = np.diff(f0_at, axis=0)
     deltas = (f0_at_diffs != 0.0).astype(np.float)
     cost_deltas = np.mean(weights[:-1] * deltas, axis=0)
 
     # Tuning factor is minimum cost.
-    norm = lambda x: (x - np.mean(x)) / np.std(x)
+    def norm(x): return (x - np.mean(x)) / np.std(x)
     cost = norm(cost_deltas) + norm(cost_diffs)
     return tuning_factors[np.argmin(cost)]
 
@@ -259,7 +260,8 @@ def auto_tune(f0_midi, tuning_factor, mask_on, amount=0.0, chromatic=False):
 
         f0_on = f0_midi[mask_on]
         # [time, scale, note]
-        f0_diff_tsn = f0_on[:, np.newaxis, np.newaxis] - all_scales[np.newaxis, :, :]
+        f0_diff_tsn = f0_on[:, np.newaxis, np.newaxis] - \
+            all_scales[np.newaxis, :, :]
         # [time, scale]
         f0_diff_ts = np.min(np.abs(f0_diff_tsn), axis=-1)
         # [scale]
@@ -270,13 +272,14 @@ def auto_tune(f0_midi, tuning_factor, mask_on, amount=0.0, chromatic=False):
         ]
 
         # [time]
-        f0_diff_tn = f0_midi[:, np.newaxis] - all_scales[scale_idx][np.newaxis, :]
+        f0_diff_tn = f0_midi[:, np.newaxis] - \
+            all_scales[scale_idx][np.newaxis, :]
         note_idx = np.argmin(np.abs(f0_diff_tn), axis=-1)
         midi_diff = np.take_along_axis(f0_diff_tn, note_idx[:, np.newaxis], axis=-1)[
             :, 0
         ]
-        print(f"Autotuning... \nInferred key: {scale}  \nTuning offset: {int(tuning_factor * 100)} cents")
-
+        print(
+            f"Autotuning... \nInferred key: {scale}  \nTuning offset: {int(tuning_factor * 100)} cents")
 
     # Adjust the midi signal.
     return f0_midi - amount * midi_diff
