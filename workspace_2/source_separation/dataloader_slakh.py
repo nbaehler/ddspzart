@@ -107,7 +107,6 @@ class Track():
         # print("get mix", toc-tic)
         start_time = random.uniform(0, self.duration - self.seq_duration)
         self.start_time = start_time
-        # self.start_time = 50 #FIXME REmove
         return get_sequence_from_start_and_duration(x, self.seq_duration, self.start_time, sr)
 
     def get_nb_audio_samples(self):

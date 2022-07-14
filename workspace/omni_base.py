@@ -180,13 +180,13 @@ class Label:
     instrument: int
         Instrument number in Midi.
     velocity: int
-        Velocity of keypress, should be wihtin 0~127
+        Velocity of keypress, should be within 0~127
     start_beat: float
         Start beat index of the note.
     end_beat: float
         End beat index of the note.
     note_value: str
-        Type of the note (e.g. quater, eighth, sixteenth).
+        Type of the note (e.g. quarter, eighth, sixteenth).
     is_drum: bool
         Whether the note represents the drum note.
     """
@@ -299,7 +299,7 @@ class BaseDatasetLoader:
     feature:
         Input feature for training the model.
     label:
-        Coressponding label representation.
+        Corresponding label representation.
     """
 
     def __init__(

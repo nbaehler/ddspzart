@@ -42,8 +42,6 @@ def main():
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     pin_memory = True if use_cuda else False
 
-    # device = "cpu" #FIXME Remove
-
     print(TARGET)
     print(CKPT_PATH)
     print(device)
@@ -83,7 +81,7 @@ def main():
         X = transform(x[None]).T
         scaler.partial_fit(X.squeeze().numpy())
 
-    # set inital input scaler values
+    # set initial input scaler values
     scale = np.maximum(
         scaler.scale_,
         1e-4*np.max(scaler.scale_)
@@ -153,7 +151,7 @@ def main():
         toc = time.perf_counter()
         toc2 = time.process_time()
 
-        print("Time elpased for epoch", toc - tic, toc2 - tic2)
+        print("Time elapsed for epoch", toc - tic, toc2 - tic2)
 
         if epoch % VALID_EVERY_N_EPOCH == 0:
             unmix.eval()

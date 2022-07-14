@@ -231,7 +231,7 @@ def get_tuning_factor(f0_midi, f0_confidence, mask_on):
     midi_diffs[midi_diffs > 0.5] -= 1.0
     weights = f0_confidence[mask_on][:, np.newaxis]
 
-    # Computes mininmum adjustment distance.
+    # Computes minimum adjustment distance.
     cost_diffs = np.abs(midi_diffs)
     cost_diffs = np.mean(weights * cost_diffs, axis=0)
 

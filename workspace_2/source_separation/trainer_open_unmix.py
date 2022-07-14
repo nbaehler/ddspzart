@@ -38,7 +38,7 @@ class SourceSeparation():
         return self.transform(y)
 
 
-class SourceSeperationLight(pl.LightningModule):
+class SourceSeparationLight(pl.LightningModule):
 
     def __init__(self, model) -> None:
         super().__init__()

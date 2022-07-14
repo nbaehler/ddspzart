@@ -279,7 +279,7 @@ def norm_split_onset_dura(
     """An advanced version of function for normalizing onset and duration channel.
 
     From the extensive experiments, we observe that the average prediction value for high and low frequency are
-    different. Lower pitches tend to have smaller values, while higher pitches having larger. To acheive better
+    different. Lower pitches tend to have smaller values, while higher pitches having larger. To achieve better
     transcription results, the most straight-forward solution is to assign different thresholds for low and
     high frequency part. And this is what this function provides for the purpose.
 
