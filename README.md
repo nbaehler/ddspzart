@@ -63,12 +63,12 @@ Spleeter has the following modes of separation:
 
 Open-Unmix tries to separate into the following classes: vocals, drums, bass and
 other instruments, which is fairly similar to Spleeter capabilities (second
-mode). After having anayled both tools Spleeter and Open-Unmix and after having seen later in class too, we were more inclined to use it
+mode). After having analyzed both tools Spleeter and Open-Unmix and after having seen later in class too, we were more inclined to use it
 Open-Unmix in our project.
-It is out of scope for this project to perform a thorough network analysis, thorough training of the network, hyperparameter tuning, documenation, and evaluation of those.
+It is out of scope for this project to perform a thorough network analysis, thorough training of the network, hyperparameter tuning, documentation, and evaluation of those.
 However, our goal was to get the framework working (on our computer and on the IZAR cluster as well to allow faster training). We provide a notebook for easier training on the laptop and a training script for usage on the cluster.
 We do not obtain perfect results but we see where show where are the restrictions and boundaries of the model and where more efforts could lead to better results. For further work, we provide functionality for evaluation as well.
-We provide a rough demonstration in the notebook ws_2/source_seperation/1_source_seperation_trumpet. We do not provide a detailed explanation of the training scripts. For training, we used train_script.py, train_clean_pipeline.ipynb and train_openunmix.ipynb.
+We provide a rough demonstration in the notebook ws_2/source_separation/1_source_separation_trumpet. We do not provide a detailed explanation of the training scripts. For training, we used train_script.py, train_clean_pipeline.ipynb and train_openunmix.ipynb.
 
 #### Omnizart
 
@@ -104,7 +104,7 @@ on that later. The list of pretrained instrument timbre goes as follows:
 - Trumpet
 - Tenor Saxophone
 
-We demonstrate DDSP in a multi-instrument setting in the notebook "0_timbre_transfer_ensemble.ipynb" in ws_2/source_seperation with ideally seperated instruments.
+We demonstrate DDSP in a multi-instrument setting in the notebook "0_timbre_transfer_ensemble.ipynb" in ws_2/source_separation with ideally separated instruments.
 Here, we also use the models we trained ourselves with music that we recorded ourselves - French horn and guitar.
 
 #### Recording our own timbres
