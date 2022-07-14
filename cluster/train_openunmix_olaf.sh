@@ -15,7 +15,7 @@ echo STARTING AT $(date)
 
 . ~/cm22/cluster/load.sh
 
-cd ~/cm22/ws_2/source_seperation
+cd ~/cm22/workspace_2/source_separation
 
 python timbre_transfer.py
 

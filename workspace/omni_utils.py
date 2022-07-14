@@ -55,11 +55,13 @@ def get_logger(name=None, level="warn"):
     }
 
     date_format = "%Y-%m-%d %H:%M:%S"
-    formatter = logging.Formatter(fmt=msg_formats[level.lower()], datefmt=date_format)
+    formatter = logging.Formatter(
+        fmt=msg_formats[level.lower()], datefmt=date_format)
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     if len(logger.handlers) > 0:
-        rm_idx = [idx for idx, handler in enumerate(logger.handlers) if isinstance(handler, logging.StreamHandler)]
+        rm_idx = [idx for idx, handler in enumerate(
+            logger.handlers) if isinstance(handler, logging.StreamHandler)]
         for idx in rm_idx:
             del logger.handlers[idx]
     logger.addHandler(handler)
@@ -140,6 +142,7 @@ def json_serializable(key_path="./", value_path="./"):
     tests.test_utils.test_normal_serializable: Unit test of this decorator.
 
     """
+
     def from_json(self, json_obj):
         if self.schema is not None:
             jsonschema.validate(instance=json_obj, schema=self.schema)
@@ -220,7 +223,8 @@ def json_serializable(key_path="./", value_path="./"):
         setattr(tar_cls, "key_path", key_path)
         setattr(tar_cls, "value_path", value_path)
         setattr(tar_cls, "schema", None)
-        setattr(tar_cls, "_ignore_list", ["_ignore_list", "key_path", "value_path", "schema"])
+        setattr(tar_cls, "_ignore_list", [
+                "_ignore_list", "key_path", "value_path", "schema"])
         return tar_cls
 
     return wrapper
@@ -301,6 +305,7 @@ class LazyLoader(types.ModuleType):
     ----------
     .. [1] https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/lazy_loader.py
     """
+
     def __init__(self, local_name, parent_module_globals, name, warning=None):
         self._local_name = local_name
         self._parent_module_globals = parent_module_globals
@@ -364,7 +369,8 @@ def aggregate_f0_info(pred, t_unit):
     start_idx = 0
     last_hz = pred[0]
     eps = 1e-6
-    pred = np.append(pred, 0)  # Append an additional zero to the end temporarily.
+    # Append an additional zero to the end temporarily.
+    pred = np.append(pred, 0)
     while cur_idx < len(pred):
         cur_hz = pred[cur_idx]
         if abs(cur_hz - last_hz) < eps:

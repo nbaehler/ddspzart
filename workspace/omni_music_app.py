@@ -152,11 +152,12 @@ class MusicTranscription(BaseTranscription):
             ],
         )
 
-        out_paths = [self._output_midi(output=output, input_audio=input_audio, midi=midi, instrument=i) for i, midi in enumerate(midis)]
-
+        out_paths = [self._output_midi(
+            output=output, input_audio=input_audio, midi=midi, instrument=i) for i, midi in enumerate(midis)]
 
         if os.environ.get("LOG_LEVEL", "") == "debug":
-            dump_pickle({"pred": pred, "feature": feature}, "./debug_pred.pickle")
+            dump_pickle({"pred": pred, "feature": feature},
+                        "./debug_pred.pickle")
 
         logger.info("Transcription finished")
         return out_paths
@@ -260,8 +261,10 @@ class MusicTranscription(BaseTranscription):
         # Fetching label files
         train_label_files = struct.get_train_labels(dataset_path=dataset_path)
         test_label_files = struct.get_test_labels(dataset_path=dataset_path)
-        logger.info("Number of total training labels: %d", len(train_label_files))
-        logger.info("Number of total testing labels: %d", len(test_label_files))
+        logger.info("Number of total training labels: %d",
+                    len(train_label_files))
+        logger.info("Number of total testing labels: %d",
+                    len(test_label_files))
         assert len(train_label_files) == len(train_wav_files)
         assert len(test_label_files) == len(test_wav_files)
 
@@ -281,8 +284,10 @@ class MusicTranscription(BaseTranscription):
         )
 
         # Writing out the settings
-        write_yaml(settings.to_json(), jpath(train_feat_out_path, ".success.yaml"))
-        write_yaml(settings.to_json(), jpath(test_feat_out_path, ".success.yaml"))
+        write_yaml(settings.to_json(), jpath(
+            train_feat_out_path, ".success.yaml"))
+        write_yaml(settings.to_json(), jpath(
+            test_feat_out_path, ".success.yaml"))
         logger.info("All done")
 
     def train(
@@ -386,7 +391,8 @@ class MusicTranscription(BaseTranscription):
         )
 
         if input_model_path is None:
-            logger.info("Creating new model with type: %s", settings.model.model_type)
+            logger.info("Creating new model with type: %s",
+                        settings.model.model_type)
             model_func = {
                 "aspp": semantic_segmentation,
                 "attn": semantic_segmentation_attn,
@@ -418,7 +424,8 @@ class MusicTranscription(BaseTranscription):
             model_name = f"{settings.model.save_prefix}_{model_name}"
         model_save_path = jpath(settings.model.save_path, model_name)
         ensure_path_exists(model_save_path)
-        write_yaml(settings.to_json(), jpath(model_save_path, "configurations.yaml"))
+        write_yaml(settings.to_json(), jpath(
+            model_save_path, "configurations.yaml"))
         logger.info("Model output to: %s", model_save_path)
 
         logger.info("Constructing callbacks")
@@ -426,7 +433,8 @@ class MusicTranscription(BaseTranscription):
             tf.keras.callbacks.EarlyStopping(
                 patience=settings.training.early_stop, monitor="val_acc"
             ),
-            tf.keras.callbacks.ModelCheckpoint(model_save_path, monitor="val_accuracy"),
+            tf.keras.callbacks.ModelCheckpoint(
+                model_save_path, monitor="val_accuracy"),
             tf.keras.callbacks.LearningRateScheduler(
                 lambda epoch, lr: lr_scheduler(
                     epoch, lr, update_after=3, dec_every=3, dec_rate=0.25
@@ -570,7 +578,8 @@ class MusicDatasetLoader(BaseDatasetLoader):
         for hdf in self.hdf_files:
             ref = h5py.File(hdf, "r")
             self.hdf_refs[hdf] = ref
-            self.pkls[hdf] = pickle.load(open(hdf.replace(".hdf", ".pickle"), "rb"))
+            self.pkls[hdf] = pickle.load(
+                open(hdf.replace(".hdf", ".pickle"), "rb"))
 
         ori_feature_num = list(self.hdf_refs.values())[0]["feature"]
         diff = feature_num - ori_feature_num.shape[1]
@@ -582,7 +591,7 @@ class MusicDatasetLoader(BaseDatasetLoader):
     def _get_feature(self, hdf_name, slice_start):
         feat = self.hdf_refs[hdf_name]["feature"]
         container = [
-            feat[slice_start : slice_start + self.slice_hop, :, ch].squeeze()
+            feat[slice_start: slice_start + self.slice_hop, :, ch].squeeze()
             for ch in self.channels
         ]
 
@@ -593,7 +602,7 @@ class MusicDatasetLoader(BaseDatasetLoader):
         return feat
 
     def _get_label(self, hdf_name, slice_start):
-        ll = self.pkls[hdf_name][slice_start : slice_start + self.slice_hop]
+        ll = self.pkls[hdf_name][slice_start: slice_start + self.slice_hop]
         label = self.conv_func(ll)
         if self.pad:
             label = np.pad(label, self.pad_shape, constant_values=0)
