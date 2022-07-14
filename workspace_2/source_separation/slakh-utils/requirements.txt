@@ -1,0 +1,7 @@
+ffmpeg-python
+SoundFile
+PyYAML>=5.1
+stempeg
+librosa
+loguru
+numpy

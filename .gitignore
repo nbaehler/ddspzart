@@ -26,5 +26,8 @@ workspace/data/*
 !workspace/data/sample.wav
 !workspace/data/1788_example*
 
-ws_2/source_separation/lightning_logs
-ws_2/source_separation/runs
+workspace_2/source_separation/lightning_logs
+workspace_2/source_separation/runs
+program.prof
+
+*.flac
