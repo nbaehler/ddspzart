@@ -71,7 +71,7 @@ We do not obtain perfect results but we see where show where are the restriction
 We provide a rough demonstration in the notebook
 `workspace_2/source_separation/1_source_separation_trumpet.ipynb`. We do not provide a
 detailed explanation of the training scripts. For training, we used
-`train_script.py`, `train_clean_pipeline.ipynb` and `train_openunmix.ipynb`.
+`train_reduce_lr.py`, `train_clean_pipeline.ipynb` and `train_openunmix.ipynb`. Consider that for training, you need the slakh dataset.
 
 #### Omnizart
 
