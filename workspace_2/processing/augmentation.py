@@ -119,7 +119,7 @@ class PitchShiftTransformer(Transformer[np.ndarray, np.ndarray]):
             try:
                 y[n:n +
                     grain_size] += Utils.resample(x[n:n+chunk_size], 1 / alpha) * win
-            except:  # FIXME Check why this happens
+            except:
                 print('warning')
                 y[n:n+grain_size -
                     1] += Utils.resample(x[n:n+chunk_size], 1 / alpha) * win
