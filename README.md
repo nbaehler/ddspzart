@@ -6,6 +6,7 @@
 
 ### Overview
 We approach the task of multi-instrument timbre transfer. For this, we consider two methods: One using a common source seperator (openunmix) and a second one using a framework for multi-instrument transcription (Omnizart).
+
 ![This is an image](images/structure.png)
 
 
